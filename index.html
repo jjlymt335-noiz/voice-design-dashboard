@@ -692,7 +692,7 @@
                     const generateWithPrompt = promptDetails.generate_with_prompt || 0;
                     detailInfo = `
                         <div class="step-detail-breakdown">
-                            <div>调整过Prompt: ${promptUsers.toLocaleString()} 人 (${totalGenerate ? ((generateWithPrompt/totalGenerate)*100).toFixed(1) : 0}%)</div>
+                            <div>调整提示词权重: ${promptUsers.toLocaleString()} 人 (${totalGenerate ? ((generateWithPrompt/totalGenerate)*100).toFixed(1) : 0}%)</div>
                         </div>
                     `;
                 } else if (step.key === 'voice_design_save_success') {
