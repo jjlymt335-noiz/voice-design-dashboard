@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Design 数据看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .header .update-time {
+            color: #8892b0;
+            font-size: 14px;
+        }
+
+        .period-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .period-btn {
+            padding: 8px 20px;
+            border: 1px solid #4a5568;
+            background: transparent;
+            color: #a0aec0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .period-btn.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .period-btn:hover {
+            border-color: #667eea;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        /* 漏斗区域 */
+        .funnel-container {
+            display: flex;
+            gap: 30px;
+        }
+
+        .funnel-chart {
+            flex: 1;
+            height: 400px;
+        }
+
+        .funnel-details {
+            width: 400px;
+        }
+
+        .funnel-step {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+
+        .funnel-step:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 12px;
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-name {
+            font-size: 14px;
+            color: #e2e8f0;
+            margin-bottom: 2px;
+        }
+
+        .step-event {
+            font-size: 11px;
+            color: #718096;
+        }
+
+        .step-metrics {
+            text-align: right;
+        }
+
+        .step-metrics-row {
+            display: flex;
+            gap: 16px;
+            justify-content: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .step-metric-col {
+            text-align: center;
+            min-width: 70px;
+        }
+
+        .step-metric-label {
+            font-size: 10px;
+            color: #718096;
+            margin-bottom: 2px;
+        }
+
+        .step-metric-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .step-metric-value.users {
+            color: #667eea;
+        }
+
+        .step-metric-value.count {
+            color: #a0aec0;
+        }
+
+        .step-count {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .step-users {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .step-rate {
+            font-size: 12px;
+            color: #48bb78;
+        }
+
+        .step-rate-overall {
+            font-size: 11px;
+            color: #718096;
+        }
+
+        .step-detail-breakdown {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+            font-size: 11px;
+            color: #a0aec0;
+        }
+
+        .step-detail-breakdown div {
+            margin-bottom: 2px;
+        }
+
+        /* KPI 卡片 */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .kpi-label {
+            font-size: 13px;
+            color: #8892b0;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .kpi-sub {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        .kpi-placeholder {
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        /* 细分数据 */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .detail-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        /* 图表区域 */
+        .chart-container {
+            height: 300px;
+        }
+
+        /* 独立模块 */
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .rating-display {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 20px 0;
+        }
+
+        .rating-item {
+            text-align: center;
+        }
+
+        .rating-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .rating-count {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .rating-label {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .like { color: #48bb78; }
+        .dislike { color: #f56565; }
+
+        /* 视图切换按钮 */
+        .view-toggle {
+            display: flex;
+            gap: 4px;
+        }
+
+        .toggle-btn {
+            padding: 4px 10px;
+            font-size: 11px;
+            border: 1px solid #4a5568;
+            background: transparent;
+            color: #a0aec0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+            color: #fff;
+        }
+
+        .toggle-btn:hover {
+            border-color: #667eea;
+        }
+
+        /* 第二层指标 */
+        .metrics-layer {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .metric-group {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .metric-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .metric-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .metric-item:last-child {
+            border-bottom: none;
+        }
+
+        .metric-name {
+            font-size: 13px;
+            color: #a0aec0;
+            margin-bottom: 4px;
+        }
+
+        .metric-value-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .metric-main-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .metric-sub-value {
+            font-size: 12px;
+            color: #718096;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .funnel-container {
+                flex-direction: column;
+            }
+            .funnel-details {
+                width: 100%;
+            }
+            .module-grid,
+            .metrics-layer {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Voice Design 数据看板</h1>
+        <div class="update-time" id="updateTime">数据更新时间：加载中...</div>
+    </div>
+
+    <div class="period-selector">
+        <button class="period-btn" data-period="昨天">昨天</button>
+        <button class="period-btn active" data-period="近3天">近3天</button>
+        <button class="period-btn" data-period="近7天">近7天</button>
+    </div>
+    <div style="text-align: center; color: #718096; font-size: 12px; margin-top: -20px; margin-bottom: 20px;">
+        * 昨天 = 上一个完整数据日；近3天/7天 = 往前推相应天数的完整数据（不含今天）
+    </div>
+
+    <div class="dashboard">
+        <!-- 核心漏斗 -->
+        <div class="section">
+            <div class="section-title">核心漏斗</div>
+            <div class="funnel-container">
+                <div class="funnel-chart" id="funnelChart"></div>
+                <div class="funnel-details" id="funnelDetails"></div>
+            </div>
+        </div>
+
+        <!-- 细分数据 -->
+        <div class="section">
+            <div class="section-title">步骤细分</div>
+            <div class="detail-grid">
+                <div class="detail-card">
+                    <div class="detail-title">Step 2 入口分布</div>
+                    <div id="entryDetails"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-title">Step 3 生成行为</div>
+                    <div id="generateDetails"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-title">Step 5 保存行为</div>
+                    <div id="saveDetails"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-title">Step 6 离开去向</div>
+                    <div id="exitDetails"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 独立模块 -->
+        <div class="section">
+            <div class="section-title">独立模块</div>
+            <div class="module-grid">
+                <div class="detail-card">
+                    <div class="detail-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>评价反馈（点赞/点踩）<span style="font-size: 11px; color: #718096; font-weight: normal;"> - 近7天</span></span>
+                        <div class="view-toggle" id="ratingToggle">
+                            <button class="toggle-btn active" data-view="absolute">绝对数量</button>
+                            <button class="toggle-btn" data-view="percentage">比例视图</button>
+                        </div>
+                    </div>
+                    <div class="rating-display" id="ratingDisplay"></div>
+                    <div id="ratingFooter" style="text-align: center; color: #718096; font-size: 11px; margin-top: 10px;"></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-title">付费弹窗转化</div>
+                    <div id="upgradeDetails"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 趋势图 -->
+        <div class="section">
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>趋势变化（近14天）</span>
+                <div class="view-toggle" id="trendToggle">
+                    <button class="toggle-btn active" data-view="absolute">绝对数量</button>
+                    <button class="toggle-btn" data-view="percentage">比例视图</button>
+                </div>
+            </div>
+            <div class="chart-container" id="trendChart"></div>
+            <div id="trendFooter" style="text-align: center; color: #718096; font-size: 11px; margin-top: 10px;"></div>
+        </div>
+
+        <!-- 第二层指标 -->
+        <div class="section">
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>第二层：深层影响指标</span>
+                <div class="view-toggle" id="deepMetricsToggle">
+                    <button class="toggle-btn" data-period="昨天">昨天</button>
+                    <button class="toggle-btn active" data-period="近3天">近3天</button>
+                    <button class="toggle-btn" data-period="近7天">近7天</button>
+                </div>
+            </div>
+            <div class="metrics-layer">
+                <div class="metric-group">
+                    <div class="metric-group-title">
+                        <span>投入指标</span>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">功能实现：Voice Design 完成率</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="completionRate">-</span>
+                            <span class="metric-sub-value" id="completionDetail"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">音色供给：来自 Design 页的 TTS 生成</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="ttsFromDesign">-</span>
+                            <span class="metric-sub-value" id="ttsFromDesignPct"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">诊断：至少拥有1个design音色的用户占比</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value kpi-placeholder">待埋点支持</span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">诊断：人均拥有的design音色数</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value kpi-placeholder">待埋点支持</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-group-title">
+                        <span>护栏指标</span>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">结果质量：Design音色TTS的下载率</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value kpi-placeholder">待埋点支持</span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">入口付费：Design入口 → 付费用户</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="designPayment">-</span>
+                            <span class="metric-sub-value" id="designPaymentDetail"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">诊断：通过design入口进入付费页的比例</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="designPaymentPct">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dashboardData = null;
+        let currentPeriod = '近3天';
+
+        // 加载数据
+        async function loadData() {
+            try {
+                const response = await fetch('data/dashboard_data.json');
+                dashboardData = await response.json();
+                document.getElementById('updateTime').textContent = `数据更新时间：${dashboardData.update_time}`;
+                renderDashboard();
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                document.getElementById('updateTime').textContent = '数据加载失败，请检查 data/dashboard_data.json';
+            }
+        }
+
+        // 渲染看板
+        function renderDashboard() {
+            renderFunnel();
+            renderStepDetails();
+            renderRating();
+            renderUpgrade();
+            renderTrend();
+            renderDeepMetrics();
+        }
+
+        // 渲染漏斗
+        function renderFunnel() {
+            const data = dashboardData.funnel[currentPeriod];
+
+            const steps = [
+                { key: 'page_voice_design_exposure', name: '曝光', step: 1 },
+                { key: 'entry', name: '进入创编页', step: 2, isComposite: true },
+                { key: 'voice_design_generate_click', name: '生成音色', step: 3 },
+                { key: 'voice_design_select_click', name: '选择音色', step: 4 },
+                { key: 'voice_design_save_success', name: '保存音色', step: 5 },
+                { key: 'exit', name: '前往其他页面', step: 6, isComposite: true },
+            ];
+
+            // 计算复合指标
+            const entryCount = (data['creation_voice_design_click']?.count || 0) + (data['voice_library_voice_design_click']?.count || 0);
+            const entryUsers = (data['creation_voice_design_click']?.users || 0) + (data['voice_library_voice_design_click']?.users || 0);
+            const exitCount = (data['voice_design_save_voice_use']?.count || 0) + (data['voice_design_complete_back']?.count || 0);
+            const exitUsers = (data['voice_design_save_voice_use']?.users || 0) + (data['voice_design_complete_back']?.users || 0);
+
+            const funnelData = [];
+            const detailsHtml = [];
+            let prevUsers = null;
+            let firstUsers = null; // 记录曝光用户数，用于计算整体转化
+
+            steps.forEach((step, index) => {
+                let count, users;
+                if (step.isComposite) {
+                    if (step.key === 'entry') {
+                        count = entryCount;
+                        users = entryUsers;
+                    } else {
+                        count = exitCount;
+                        users = exitUsers;
+                    }
+                } else {
+                    count = data[step.key]?.count || 0;
+                    users = data[step.key]?.users || 0;
+                }
+
+                // 记录第一步的用户数
+                if (index === 0) {
+                    firstUsers = users;
+                }
+
+                // 相对上一阶段的转化率
+                const stepRate = prevUsers ? ((users / prevUsers) * 100).toFixed(1) + '%' : '-';
+                // 相对于曝光的整体转化率
+                const overallRate = (index > 0 && firstUsers) ? ((users / firstUsers) * 100).toFixed(1) + '%' : '-';
+
+                prevUsers = users;
+
+                funnelData.push({ value: users, name: `Step${step.step} ${step.name}` });
+
+                // 构建细分信息
+                let detailInfo = '';
+                if (step.key === 'entry') {
+                    const creation = data['creation_voice_design_click'] || { count: 0, users: 0 };
+                    const library = data['voice_library_voice_design_click'] || { count: 0, users: 0 };
+                    const totalUsers = creation.users + library.users;
+                    detailInfo = `
+                        <div class="step-detail-breakdown">
+                            <div>从创作页进入: ${creation.users.toLocaleString()} 人 (${totalUsers ? ((creation.users/totalUsers)*100).toFixed(1) : 0}%)</div>
+                            <div>从音色库进入: ${library.users.toLocaleString()} 人 (${totalUsers ? ((library.users/totalUsers)*100).toFixed(1) : 0}%)</div>
+                        </div>
+                    `;
+                } else if (step.key === 'voice_design_generate_click') {
+                    // 生成行为细分
+                    const promptDetails = dashboardData.step_details[currentPeriod]?.prompt_adjustment || {};
+                    const totalGenerate = promptDetails.total_generate_users || users;
+                    const promptUsers = promptDetails.prompt_users || 0;
+                    const generateWithPrompt = promptDetails.generate_with_prompt || 0;
+                    detailInfo = `
+                        <div class="step-detail-breakdown">
+                            <div>调整过Prompt: ${promptUsers.toLocaleString()} 人 (${totalGenerate ? ((generateWithPrompt/totalGenerate)*100).toFixed(1) : 0}%)</div>
+                        </div>
+                    `;
+                } else if (step.key === 'voice_design_save_success') {
+                    // 保存行为细分
+                    const saveDetails = dashboardData.step_details[currentPeriod]?.save_adjustment || {};
+                    const totalSave = saveDetails.total_save_users || users;
+                    const labelAdjust = saveDetails.with_label_adjust || 0;
+                    const descAdjust = saveDetails.with_desc_adjust || 0;
+                    detailInfo = `
+                        <div class="step-detail-breakdown">
+                            <div>修改过标签: ${labelAdjust.toLocaleString()} 人 (${totalSave ? ((labelAdjust/totalSave)*100).toFixed(1) : 0}%)</div>
+                            <div>修改过描述: ${descAdjust.toLocaleString()} 人 (${totalSave ? ((descAdjust/totalSave)*100).toFixed(1) : 0}%)</div>
+                        </div>
+                    `;
+                } else if (step.key === 'exit') {
+                    const toTTS = data['voice_design_save_voice_use'] || { count: 0, users: 0 };
+                    const toLib = data['voice_design_complete_back'] || { count: 0, users: 0 };
+                    const totalUsers = toTTS.users + toLib.users;
+                    detailInfo = `
+                        <div class="step-detail-breakdown">
+                            <div>去 TTS 页面: ${toTTS.users.toLocaleString()} 人 (${totalUsers ? ((toTTS.users/totalUsers)*100).toFixed(1) : 0}%)</div>
+                            <div>回 Library: ${toLib.users.toLocaleString()} 人 (${totalUsers ? ((toLib.users/totalUsers)*100).toFixed(1) : 0}%)</div>
+                        </div>
+                    `;
+                }
+
+                detailsHtml.push(`
+                    <div class="funnel-step">
+                        <div class="step-number">${step.step}</div>
+                        <div class="step-info">
+                            <div class="step-name">${step.name}</div>
+                            <div class="step-event">${step.isComposite ? '复合指标' : step.key}</div>
+                            ${detailInfo}
+                        </div>
+                        <div class="step-metrics">
+                            <div class="step-metrics-row">
+                                <div class="step-metric-col">
+                                    <div class="step-metric-label">去重用户数</div>
+                                    <div class="step-metric-value users">${users.toLocaleString()}</div>
+                                </div>
+                                <div class="step-metric-col">
+                                    <div class="step-metric-label">事件触发次数</div>
+                                    <div class="step-metric-value count">${count.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div class="step-rate">上步转化 ${stepRate}</div>
+                            <div class="step-rate-overall">整体转化(vs曝光) ${overallRate}</div>
+                        </div>
+                    </div>
+                `);
+            });
+
+            document.getElementById('funnelDetails').innerHTML = detailsHtml.join('');
+
+            // 绘制漏斗图
+            const chart = echarts.init(document.getElementById('funnelChart'));
+            chart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{b}: {c} 人'
+                },
+                series: [{
+                    type: 'funnel',
+                    left: '10%',
+                    top: 20,
+                    bottom: 20,
+                    width: '80%',
+                    min: 0,
+                    max: funnelData[0]?.value || 100,
+                    minSize: '20%',
+                    maxSize: '100%',
+                    sort: 'descending',
+                    gap: 2,
+                    label: {
+                        show: true,
+                        position: 'inside',
+                        formatter: '{b}\n{c}',
+                        color: '#fff',
+                        fontSize: 12
+                    },
+                    itemStyle: {
+                        borderColor: '#1a1a2e',
+                        borderWidth: 1
+                    },
+                    emphasis: {
+                        label: {
+                            fontSize: 14
+                        }
+                    },
+                    data: funnelData,
+                    color: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#43e97b']
+                }]
+            });
+        }
+
+        // 渲染步骤细分
+        function renderStepDetails() {
+            const details = dashboardData.step_details[currentPeriod] || dashboardData.step_details['近7天'] || {};
+            const exitData = dashboardData.exit_distribution[currentPeriod] || dashboardData.exit_distribution['近7天'] || {};
+            const funnelData = dashboardData.funnel[currentPeriod];
+
+            // 入口分布
+            const entry = details.entry_distribution || {};
+            const creationEntry = entry['creation_voice_design_click'] || { count: 0, users: 0 };
+            const libraryEntry = entry['voice_library_voice_design_click'] || { count: 0, users: 0 };
+            const totalEntry = creationEntry.count + libraryEntry.count;
+
+            document.getElementById('entryDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">从创作页进入</span>
+                    <span class="detail-value">${creationEntry.users.toLocaleString()} 人 (${totalEntry ? ((creationEntry.count/totalEntry)*100).toFixed(1) : 0}%)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">从音色库进入</span>
+                    <span class="detail-value">${libraryEntry.users.toLocaleString()} 人 (${totalEntry ? ((libraryEntry.count/totalEntry)*100).toFixed(1) : 0}%)</span>
+                </div>
+            `;
+
+            // 生成行为
+            const prompt = details.prompt_adjustment;
+            const promptRate = prompt.total_generate_users ? ((prompt.generate_with_prompt / prompt.total_generate_users) * 100).toFixed(1) : 0;
+            document.getElementById('generateDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">调整过 Prompt 的用户</span>
+                    <span class="detail-value">${prompt.prompt_users?.toLocaleString() || 0} 人</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">生成用户中调整过 Prompt</span>
+                    <span class="detail-value">${promptRate}%</span>
+                </div>
+            `;
+
+            // 保存行为
+            const save = details.save_adjustment;
+            const labelRate = save.total_save_users ? ((save.with_label_adjust / save.total_save_users) * 100).toFixed(1) : 0;
+            const descRate = save.total_save_users ? ((save.with_desc_adjust / save.total_save_users) * 100).toFixed(1) : 0;
+            document.getElementById('saveDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">修改过标签的用户</span>
+                    <span class="detail-value">${save.with_label_adjust?.toLocaleString() || 0} 人 (${labelRate}%)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">修改过描述的用户</span>
+                    <span class="detail-value">${save.with_desc_adjust?.toLocaleString() || 0} 人 (${descRate}%)</span>
+                </div>
+            `;
+
+            // 离开去向
+            const toTTS = exitData['voice_design_save_voice_use'] || { count: 0, users: 0 };
+            const toLib = exitData['voice_design_complete_back'] || { count: 0, users: 0 };
+            const totalExit = toTTS.users + toLib.users;
+            document.getElementById('exitDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">去 TTS 页面</span>
+                    <span class="detail-value">${toTTS.users.toLocaleString()} 人 (${totalExit ? ((toTTS.users/totalExit)*100).toFixed(1) : 0}%)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">回 Library</span>
+                    <span class="detail-value">${toLib.users.toLocaleString()} 人 (${totalExit ? ((toLib.users/totalExit)*100).toFixed(1) : 0}%)</span>
+                </div>
+            `;
+        }
+
+        let ratingViewMode = 'absolute'; // 'absolute' or 'percentage'
+
+        // 渲染评价
+        function renderRating() {
+            const rating = dashboardData.rating;
+            // 获取近7天选择音色的用户数
+            const selectUsers = dashboardData.funnel['近7天']?.['voice_design_select_click']?.users || 0;
+
+            // 好评率 = 点赞 / (点赞 + 点踩)
+            const validTotal = rating.like + rating.dislike;
+            const likeRate = validTotal ? ((rating.like / validTotal) * 100).toFixed(1) : 0;
+            const dislikeRate = validTotal ? ((rating.dislike / validTotal) * 100).toFixed(1) : 0;
+
+            // 评价率 = 总评价数 / 选择音色用户数
+            const ratingRate = selectUsers ? ((rating.total / selectUsers) * 100).toFixed(1) : 0;
+
+            if (ratingViewMode === 'absolute') {
+                document.getElementById('ratingDisplay').innerHTML = `
+                    <div class="rating-item">
+                        <div class="rating-icon">👍</div>
+                        <div class="rating-count like">${rating.like.toLocaleString()}</div>
+                        <div class="rating-label">点赞</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="rating-icon">👎</div>
+                        <div class="rating-count dislike">${rating.dislike.toLocaleString()}</div>
+                        <div class="rating-label">点踩</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="rating-icon">📊</div>
+                        <div class="rating-count">${rating.total.toLocaleString()}</div>
+                        <div class="rating-label">总评价</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="rating-icon">🎯</div>
+                        <div class="rating-count">${selectUsers.toLocaleString()}</div>
+                        <div class="rating-label">选择音色人数</div>
+                    </div>
+                `;
+                document.getElementById('ratingFooter').innerHTML = `
+                    * 评价率 = ${rating.total} / ${selectUsers} = ${ratingRate}%（总评价数 / 选择音色用户数）<br>
+                    * 好评率 = ${rating.like} / ${validTotal} = ${likeRate}%（点赞 / (点赞+点踩)）
+                `;
+            } else {
+                document.getElementById('ratingDisplay').innerHTML = `
+                    <div class="rating-item">
+                        <div class="rating-icon">👍</div>
+                        <div class="rating-count like">${likeRate}%</div>
+                        <div class="rating-label">点赞占比</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="rating-icon">👎</div>
+                        <div class="rating-count dislike">${dislikeRate}%</div>
+                        <div class="rating-label">点踩占比</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="rating-icon">📊</div>
+                        <div class="rating-count">${ratingRate}%</div>
+                        <div class="rating-label">评价率</div>
+                    </div>
+                    <div class="rating-item">
+                        <div class="rating-icon">✨</div>
+                        <div class="rating-count like">${likeRate}%</div>
+                        <div class="rating-label">好评率</div>
+                    </div>
+                `;
+                document.getElementById('ratingFooter').innerHTML = `
+                    * 点赞/点踩占比 = 各自数量 / (点赞+点踩)，不含未评价<br>
+                    * 评价率 = 总评价数(${rating.total}) / 选择音色用户数(${selectUsers})<br>
+                    * 好评率 = 点赞 / (点赞+点踩)
+                `;
+            }
+        }
+
+        // 评价视图切换事件
+        document.getElementById('ratingToggle').addEventListener('click', function(e) {
+            if (e.target.classList.contains('toggle-btn')) {
+                document.querySelectorAll('#ratingToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                ratingViewMode = e.target.dataset.view;
+                renderRating();
+            }
+        });
+
+        // 渲染付费弹窗
+        function renderUpgrade() {
+            const upgrade = dashboardData.upgrade;
+            const popup = upgrade['voice_design_upgrade_popup'] || { count: 0, users: 0 };
+            const confirm = upgrade['voice_design_upgrade_confirm_click'] || { count: 0, users: 0 };
+            const cancel = upgrade['voice_design_upgrade_cancel_click'] || { count: 0, users: 0 };
+
+            // 弹窗响应率 = (upgrade + cancel) / popup
+            const totalResponse = confirm.users + cancel.users;
+            const responseRate = popup.users ? ((totalResponse / popup.users) * 100).toFixed(1) : 0;
+            // 弹窗内升级率 = upgrade / (upgrade + cancel)
+            const upgradeRate = totalResponse ? ((confirm.users / totalResponse) * 100).toFixed(1) : 0;
+
+            document.getElementById('upgradeDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">弹窗展示</span>
+                    <span class="detail-value">${popup.count.toLocaleString()} 次 / ${popup.users.toLocaleString()} 人</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">点击 Upgrade</span>
+                    <span class="detail-value">${confirm.count.toLocaleString()} 次 / ${confirm.users.toLocaleString()} 人</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">点击 Maybe Later</span>
+                    <span class="detail-value">${cancel.count.toLocaleString()} 次 / ${cancel.users.toLocaleString()} 人</span>
+                </div>
+                <div class="detail-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                    <span class="detail-label">弹窗内选择率</span>
+                    <span class="detail-value">${upgradeRate}% 选择升级</span>
+                </div>
+                <div style="color: #f56565; font-size: 11px; margin-top: 10px; padding: 8px; background: rgba(245,101,101,0.1); border-radius: 4px;">
+                    ⚠️ 数据异常：Upgrade点击人数(${confirm.users})远大于弹窗展示人数(${popup.users})，可能upgrade埋点不止在此弹窗触发
+                </div>
+            `;
+        }
+
+        let trendViewMode = 'absolute'; // 'absolute' or 'percentage'
+        let trendChart = null;
+
+        // 渲染趋势图
+        function renderTrend() {
+            const trend = dashboardData.trend;
+            const dates = Object.keys(trend).sort();
+
+            const formatDate = (d) => `${d.slice(4,6)}/${d.slice(6,8)}`;
+
+            // 比例视图不需要曝光线（因为它始终是100%）
+            const seriesAbsolute = [
+                { name: '曝光', key: 'page_voice_design_exposure', color: '#667eea' },
+                { name: '进入创编页', key: 'entry_composite', color: '#4facfe' },
+                { name: '生成音色', key: 'voice_design_generate_click', color: '#764ba2' },
+                { name: '选择音色', key: 'voice_design_select_click', color: '#f093fb' },
+                { name: '保存音色', key: 'voice_design_save_success', color: '#48bb78' },
+            ];
+
+            const seriesPercentage = [
+                { name: '进入创编页', key: 'entry_composite', color: '#4facfe' },
+                { name: '生成音色', key: 'voice_design_generate_click', color: '#764ba2' },
+                { name: '选择音色', key: 'voice_design_select_click', color: '#f093fb' },
+                { name: '保存音色', key: 'voice_design_save_success', color: '#48bb78' },
+            ];
+
+            const series = trendViewMode === 'absolute' ? seriesAbsolute : seriesPercentage;
+
+            // 计算比例数据
+            const getSeriesData = (s) => {
+                if (trendViewMode === 'absolute') {
+                    return dates.map(d => trend[d]?.[s.key]?.users || 0);
+                } else {
+                    return dates.map(d => {
+                        const exposure = trend[d]?.['page_voice_design_exposure']?.users || 1;
+                        const value = trend[d]?.[s.key]?.users || 0;
+                        return parseFloat(((value / exposure) * 100).toFixed(1));
+                    });
+                }
+            };
+
+            if (trendChart) {
+                trendChart.dispose();
+            }
+            trendChart = echarts.init(document.getElementById('trendChart'));
+
+            trendChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const date = params[0].axisValue;
+                        const dateKey = dates[params[0].dataIndex];
+                        const exposureUsers = trend[dateKey]?.['page_voice_design_exposure']?.users || 1;
+
+                        let html = `<div style="font-weight: bold; margin-bottom: 8px;">${date}</div>`;
+                        if (trendViewMode === 'absolute') {
+                            params.forEach(p => {
+                                const value = p.value;
+                                const rate = p.seriesName === '曝光' ? '-' : ((value / exposureUsers) * 100).toFixed(1) + '%';
+                                html += `<div style="display: flex; justify-content: space-between; gap: 20px;">
+                                    <span>${p.marker} ${p.seriesName}</span>
+                                    <span><b>${value.toLocaleString()}</b> <span style="color: #a0aec0; font-size: 11px;">(${rate})</span></span>
+                                </div>`;
+                            });
+                        } else {
+                            params.forEach(p => {
+                                const pctValue = p.value;
+                                const absValue = trend[dateKey]?.[series.find(s => s.name === p.seriesName)?.key]?.users || 0;
+                                html += `<div style="display: flex; justify-content: space-between; gap: 20px;">
+                                    <span>${p.marker} ${p.seriesName}</span>
+                                    <span><b>${pctValue}%</b> <span style="color: #a0aec0; font-size: 11px;">(${absValue.toLocaleString()}人)</span></span>
+                                </div>`;
+                            });
+                        }
+                        return html;
+                    }
+                },
+                legend: {
+                    data: series.map(s => s.name),
+                    textStyle: { color: '#8892b0' },
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: dates.map(formatDate),
+                    axisLine: { lineStyle: { color: '#4a5568' } },
+                    axisLabel: { color: '#8892b0' }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLine: { lineStyle: { color: '#4a5568' } },
+                    axisLabel: {
+                        color: '#8892b0',
+                        formatter: trendViewMode === 'percentage' ? '{value}%' : '{value}'
+                    },
+                    splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } }
+                },
+                series: series.map(s => ({
+                    name: s.name,
+                    type: 'line',
+                    smooth: true,
+                    data: getSeriesData(s),
+                    itemStyle: { color: s.color },
+                    areaStyle: { opacity: 0.1 }
+                }))
+            });
+
+            // 更新说明
+            if (trendViewMode === 'absolute') {
+                document.getElementById('trendFooter').innerHTML = '* 显示每日用户数绝对值，括号内为相对曝光的转化率';
+            } else {
+                document.getElementById('trendFooter').innerHTML = '* 比例 = 各步骤用户数 / 当日曝光用户数 × 100%';
+            }
+        }
+
+        // 趋势图视图切换事件
+        document.getElementById('trendToggle').addEventListener('click', function(e) {
+            if (e.target.classList.contains('toggle-btn')) {
+                document.querySelectorAll('#trendToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                trendViewMode = e.target.dataset.view;
+                renderTrend();
+            }
+        });
+
+        let deepMetricsPeriod = '近3天'; // 深层指标独立的周期选择
+
+        // 渲染第二层指标
+        function renderDeepMetrics() {
+            // 使用深层指标独立的周期变量
+            let metrics = dashboardData.deep_metrics;
+
+            // 检查是否是新格式（按周期分组）
+            if (metrics[deepMetricsPeriod]) {
+                metrics = metrics[deepMetricsPeriod];
+            } else if (metrics['近7天']) {
+                // 兼容旧数据格式
+                metrics = metrics['近7天'];
+            }
+
+            // 完成率
+            const completion = metrics.completion || {};
+            const completionRate = completion.exposure_users ? ((completion.save_users / completion.exposure_users) * 100).toFixed(1) : 0;
+            document.getElementById('completionRate').textContent = completionRate + '%';
+            document.getElementById('completionDetail').textContent = `${completion.save_users?.toLocaleString() || 0} / ${completion.exposure_users?.toLocaleString() || 0}`;
+
+            // TTS from design
+            const ttsRate = metrics.tts_total ? ((metrics.tts_from_design / metrics.tts_total) * 100).toFixed(2) : 0;
+            document.getElementById('ttsFromDesign').textContent = (metrics.tts_from_design || 0).toLocaleString();
+            document.getElementById('ttsFromDesignPct').textContent = `占总 TTS 的 ${ttsRate}%`;
+
+            // 付费
+            const payment = metrics.payment || {};
+            document.getElementById('designPayment').textContent = payment.design_to_payment || 0;
+            document.getElementById('designPaymentDetail').textContent = `点击升级 ${payment.design_upgrade_users || 0} 人`;
+
+            const paymentPct = payment.all_payment_users ? ((payment.design_to_payment / payment.all_payment_users) * 100).toFixed(1) : 0;
+            document.getElementById('designPaymentPct').textContent = `${paymentPct}%`;
+        }
+
+        // 深层指标周期切换事件
+        document.getElementById('deepMetricsToggle').addEventListener('click', function(e) {
+            if (e.target.classList.contains('toggle-btn')) {
+                document.querySelectorAll('#deepMetricsToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                deepMetricsPeriod = e.target.dataset.period;
+                renderDeepMetrics();
+            }
+        });
+
+        // 切换时间周期
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriod = this.dataset.period;
+                renderDashboard();
+            });
+        });
+
+        // 窗口大小变化时重绘图表
+        window.addEventListener('resize', () => {
+            echarts.getInstanceByDom(document.getElementById('funnelChart'))?.resize();
+            echarts.getInstanceByDom(document.getElementById('trendChart'))?.resize();
+        });
+
+        // 初始化
+        loadData();
+    </script>
+</body>
+</html>
