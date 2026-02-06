@@ -66,6 +66,86 @@
             border-color: #667eea;
         }
 
+        /* 分层选择器 */
+        .tier-selector-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .tier-definition {
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+            border: 1px solid #c7d2fe;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin: 0 auto 16px;
+            max-width: 800px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .tier-definition-title {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .tier-definition-content {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tier-def-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tier-def-badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tier-def-badge.high { background: #fef3c7; color: #d97706; }
+        .tier-def-badge.mid { background: #dbeafe; color: #2563eb; }
+        .tier-def-badge.low { background: #e5e7eb; color: #6b7280; }
+
+        .tier-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tier-btn {
+            padding: 6px 16px;
+            border: 1px solid #cbd5e0;
+            background: #fff;
+            color: #4a5568;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .tier-btn.active {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .tier-btn:hover {
+            border-color: #667eea;
+        }
+
+        .tier-btn .tier-badge {
+            font-size: 10px;
+            margin-left: 4px;
+            opacity: 0.8;
+        }
+
         .dashboard {
             max-width: 1400px;
             margin: 0 auto;
@@ -454,6 +534,42 @@
         * 昨天 = 上一个完整数据日；近3天/7天 = 往前推相应天数的完整数据（不含今天）
     </div>
 
+    <!-- 用户分层选择器 -->
+    <div class="tier-selector-container">
+        <div class="tier-definition">
+            <div class="tier-definition-title">📊 用户分层口径说明</div>
+            <div class="tier-definition-content">
+                <div class="tier-def-item">
+                    <span>计算方式：每用户平均generate次数 = 总generate次数 / 有generate行为的天数</span>
+                </div>
+            </div>
+            <div class="tier-definition-content" style="margin-top: 8px;">
+                <div class="tier-def-item">
+                    <span class="tier-def-badge high">高频</span>
+                    <span>≥4次/天</span>
+                </div>
+                <div class="tier-def-item">
+                    <span class="tier-def-badge mid">中频</span>
+                    <span>1.5~4次/天</span>
+                </div>
+                <div class="tier-def-item">
+                    <span class="tier-def-badge low">低频</span>
+                    <span>≤1.5次/天</span>
+                </div>
+                <div class="tier-def-item" style="color: #718096;">
+                    <span>（基于近14天数据计算）</span>
+                </div>
+            </div>
+        </div>
+        <div class="tier-selector">
+            <button class="tier-btn active" data-tier="大盘">大盘</button>
+            <button class="tier-btn" data-tier="high">高频</button>
+            <button class="tier-btn" data-tier="mid">中频</button>
+            <button class="tier-btn" data-tier="low">低频</button>
+        </div>
+        <div id="tierStats" style="color: #718096; font-size: 11px; margin-top: 8px;"></div>
+    </div>
+
     <div class="dashboard">
         <!-- 核心漏斗 -->
         <div class="section">
@@ -595,6 +711,15 @@
     <script>
         let dashboardData = null;
         let currentPeriod = '近3天';
+        let currentTier = '大盘';
+
+        // 分层标签映射
+        const tierLabels = {
+            '大盘': '全部用户',
+            'high': '高频',
+            'mid': '中频',
+            'low': '低频'
+        };
 
         // 加载数据
         async function loadData() {
@@ -602,11 +727,33 @@
                 const response = await fetch('data/dashboard_data.json');
                 dashboardData = await response.json();
                 document.getElementById('updateTime').textContent = `数据更新时间：${dashboardData.update_time}`;
+                renderTierStats();
                 renderDashboard();
             } catch (error) {
                 console.error('加载数据失败:', error);
                 document.getElementById('updateTime').textContent = '数据加载失败，请检查 data/dashboard_data.json';
             }
+        }
+
+        // 渲染分层统计
+        function renderTierStats() {
+            const stats = dashboardData.user_tiers;
+            if (!stats) {
+                document.getElementById('tierStats').innerHTML = '';
+                return;
+            }
+
+            const total = stats.high.users + stats.mid.users + stats.low.users;
+            const highPct = ((stats.high.users / total) * 100).toFixed(1);
+            const midPct = ((stats.mid.users / total) * 100).toFixed(1);
+            const lowPct = ((stats.low.users / total) * 100).toFixed(1);
+
+            document.getElementById('tierStats').innerHTML = `
+                分层用户数：高频 ${stats.high.users.toLocaleString()} (${highPct}%) |
+                中频 ${stats.mid.users.toLocaleString()} (${midPct}%) |
+                低频 ${stats.low.users.toLocaleString()} (${lowPct}%) |
+                合计 ${total.toLocaleString()}
+            `;
         }
 
         // 渲染看板
@@ -619,9 +766,22 @@
             renderDeepMetrics();
         }
 
+        // 获取分层数据（兼容新旧格式）
+        function getTieredData(dataObj, period, tier) {
+            // 新格式：dataObj[period][tier]
+            if (dataObj[period] && dataObj[period][tier]) {
+                return dataObj[period][tier];
+            }
+            // 旧格式：dataObj[period]
+            if (dataObj[period] && !dataObj[period]['大盘']) {
+                return dataObj[period];
+            }
+            return null;
+        }
+
         // 渲染漏斗
         function renderFunnel() {
-            const data = dashboardData.funnel[currentPeriod];
+            const data = getTieredData(dashboardData.funnel, currentPeriod, currentTier) || {};
 
             const steps = [
                 { key: 'page_voice_design_exposure', name: '曝光', step: 1 },
@@ -686,7 +846,8 @@
                     `;
                 } else if (step.key === 'voice_design_generate_click') {
                     // 生成行为细分
-                    const promptDetails = dashboardData.step_details[currentPeriod]?.prompt_adjustment || {};
+                    const stepDetails = getTieredData(dashboardData.step_details, currentPeriod, currentTier) || {};
+                    const promptDetails = stepDetails.prompt_adjustment || {};
                     const totalGenerate = promptDetails.total_generate_users || users;
                     const promptUsers = promptDetails.prompt_users || 0;
                     const generateWithPrompt = promptDetails.generate_with_prompt || 0;
@@ -697,7 +858,8 @@
                     `;
                 } else if (step.key === 'voice_design_save_success') {
                     // 保存行为细分
-                    const saveDetails = dashboardData.step_details[currentPeriod]?.save_adjustment || {};
+                    const stepDetails = getTieredData(dashboardData.step_details, currentPeriod, currentTier) || {};
+                    const saveDetails = stepDetails.save_adjustment || {};
                     const totalSave = saveDetails.total_save_users || users;
                     const labelAdjust = saveDetails.with_label_adjust || 0;
                     const descAdjust = saveDetails.with_desc_adjust || 0;
@@ -790,9 +952,11 @@
 
         // 渲染步骤细分
         function renderStepDetails() {
-            const details = dashboardData.step_details[currentPeriod] || dashboardData.step_details['近7天'] || {};
-            const exitData = dashboardData.exit_distribution[currentPeriod] || dashboardData.exit_distribution['近7天'] || {};
-            const funnelData = dashboardData.funnel[currentPeriod];
+            const details = getTieredData(dashboardData.step_details, currentPeriod, currentTier) ||
+                            getTieredData(dashboardData.step_details, '近7天', currentTier) || {};
+            const exitData = getTieredData(dashboardData.exit_distribution, currentPeriod, currentTier) ||
+                             getTieredData(dashboardData.exit_distribution, '近7天', currentTier) || {};
+            const funnelData = getTieredData(dashboardData.funnel, currentPeriod, currentTier) || {};
 
             // 入口分布
             const entry = details.entry_distribution || {};
@@ -981,7 +1145,16 @@
 
         // 渲染趋势图
         function renderTrend() {
-            const trend = dashboardData.trend;
+            // 兼容新旧格式
+            let trend = dashboardData.trend;
+            // 新格式：trend[tier][date]
+            if (trend[currentTier]) {
+                trend = trend[currentTier];
+            } else if (trend['大盘']) {
+                trend = trend['大盘'];
+            }
+            // 旧格式保持不变
+
             const dates = Object.keys(trend).sort();
 
             const formatDate = (d) => `${d.slice(4,6)}/${d.slice(6,8)}`;
@@ -1158,6 +1331,16 @@
                 document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentPeriod = this.dataset.period;
+                renderDashboard();
+            });
+        });
+
+        // 切换用户分层
+        document.querySelectorAll('.tier-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTier = this.dataset.tier;
                 renderDashboard();
             });
         });

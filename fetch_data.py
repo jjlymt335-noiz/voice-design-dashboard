@@ -1,6 +1,7 @@
 """
 Voice Design 数据看板 - 数据获取脚本
 从 BigQuery 获取数据并保存为 JSON
+支持用户分层分析（高频/中频/低频）
 """
 
 import json
@@ -12,6 +13,13 @@ client = bigquery.Client(project='noiz-430406')
 # 北京时区
 BEIJING_TZ = timezone(timedelta(hours=8))
 
+# 分层定义
+TIER_DEFINITIONS = {
+    'high': {'label': '高频', 'description': '>=4次/天', 'condition': 'avg_daily_generates >= 4'},
+    'mid': {'label': '中频', 'description': '1.5~4次/天', 'condition': 'avg_daily_generates > 1.5 AND avg_daily_generates < 4'},
+    'low': {'label': '低频', 'description': '<=1.5次/天', 'condition': 'avg_daily_generates <= 1.5'},
+}
+
 def run_query(query):
     """执行查询并返回结果"""
     try:
@@ -21,8 +29,67 @@ def run_query(query):
         print(f"查询错误: {e}")
         return []
 
+def get_user_tier_cte():
+    """返回用户分层的 CTE SQL（基于近14天数据计算平均每天generate次数）"""
+    return """
+    user_tier_base AS (
+        SELECT
+            user_pseudo_id,
+            COUNT(*) as total_generates,
+            COUNT(DISTINCT event_date) as active_days,
+            COUNT(*) * 1.0 / COUNT(DISTINCT event_date) as avg_daily_generates
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name = 'voice_design_generate_click'
+        GROUP BY user_pseudo_id
+    ),
+    user_tiers AS (
+        SELECT
+            user_pseudo_id,
+            avg_daily_generates,
+            CASE
+                WHEN avg_daily_generates >= 4 THEN 'high'
+                WHEN avg_daily_generates > 1.5 AND avg_daily_generates < 4 THEN 'mid'
+                ELSE 'low'
+            END as tier
+        FROM user_tier_base
+    )
+    """
+
+def get_user_tier_stats():
+    """获取用户分层统计信息"""
+    query = f"""
+    WITH {get_user_tier_cte()}
+    SELECT
+        tier,
+        COUNT(*) as user_count,
+        ROUND(AVG(avg_daily_generates), 2) as tier_avg
+    FROM user_tiers
+    GROUP BY tier
+    """
+
+    rows = run_query(query)
+    total_users = sum(row['user_count'] for row in rows)
+
+    result = {}
+    for row in rows:
+        tier = row['tier']
+        result[tier] = {
+            'label': TIER_DEFINITIONS[tier]['label'],
+            'description': TIER_DEFINITIONS[tier]['description'],
+            'users': row['user_count'],
+            'percentage': round(row['user_count'] / total_users * 100, 1) if total_users > 0 else 0,
+            'avg_generates': row['tier_avg']
+        }
+
+    result['total_users'] = total_users
+    result['definition'] = '按用户平均每天generate次数分层（总次数/活跃天数，基于近14天）'
+
+    return result
+
 def get_funnel_data():
-    """获取漏斗数据 - 昨天/近3天/近7天"""
+    """获取漏斗数据 - 昨天/近3天/近7天，支持分层"""
 
     events = [
         'page_voice_design_exposure',
@@ -35,55 +102,67 @@ def get_funnel_data():
         'voice_design_complete_back',
     ]
 
-    # 注意：INTERVAL 1 DAY 表示今天，INTERVAL 2 DAY 包含昨天和今天
-    # 昨天 = 只看昨天一天的数据
-    # 近3天 = 昨天 + 前天 + 大前天
-    # 近7天 = 最近7天
     periods = [
-        ('yesterday', '昨天'),    # 只看昨天
-        ('3', '近3天'),           # 最近3天
-        ('7', '近7天'),           # 最近7天
+        ('yesterday', '昨天'),
+        ('3', '近3天'),
+        ('7', '近7天'),
     ]
 
+    tiers = ['大盘', 'high', 'mid', 'low']
     results = {}
 
     for period_key, period_name in periods:
         if period_key == 'yesterday':
-            # 昨天：只看昨天一天
-            date_condition = """
-                _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))
-            """
+            date_condition = '_TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))'
         else:
-            # 近N天：从N天前到昨天（不包含今天，因为今天数据不完整）
-            date_condition = f"""
-                _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {period_key} DAY))
-                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
-            """
+            date_condition = f'_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {period_key} DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'
 
-        query = f"""
-        SELECT
-            event_name,
-            COUNT(*) as event_count,
-            COUNT(DISTINCT user_pseudo_id) as unique_users
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE {date_condition}
-            AND event_name IN ({','.join([f'"{e}"' for e in events])})
-        GROUP BY event_name
-        """
+        period_result = {}
 
-        rows = run_query(query)
-        period_data = {}
-        for row in rows:
-            period_data[row['event_name']] = {
-                'count': row['event_count'],
-                'users': row['unique_users']
-            }
-        results[period_name] = period_data
+        for tier in tiers:
+            if tier == '大盘':
+                # 大盘数据 - 不过滤用户
+                query = f"""
+                SELECT
+                    event_name,
+                    COUNT(*) as event_count,
+                    COUNT(DISTINCT user_pseudo_id) as unique_users
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE {date_condition}
+                    AND event_name IN ({','.join([f'"{e}"' for e in events])})
+                GROUP BY event_name
+                """
+            else:
+                # 分层数据 - 按用户分层过滤
+                query = f"""
+                WITH {get_user_tier_cte()}
+                SELECT
+                    e.event_name,
+                    COUNT(*) as event_count,
+                    COUNT(DISTINCT e.user_pseudo_id) as unique_users
+                FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                WHERE {date_condition}
+                    AND e.event_name IN ({','.join([f'"{ev}"' for ev in events])})
+                    AND ut.tier = '{tier}'
+                GROUP BY e.event_name
+                """
+
+            rows = run_query(query)
+            tier_data = {}
+            for row in rows:
+                tier_data[row['event_name']] = {
+                    'count': row['event_count'],
+                    'users': row['unique_users']
+                }
+            period_result[tier] = tier_data
+
+        results[period_name] = period_result
 
     return results
 
 def get_step_details():
-    """获取各步骤细分数据 - 按时间周期"""
+    """获取各步骤细分数据 - 按时间周期，支持分层"""
 
     periods = [
         ('yesterday', '昨天', '_TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))'),
@@ -91,83 +170,113 @@ def get_step_details():
         ('7', '近7天', '_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'),
     ]
 
+    tiers = ['大盘', 'high', 'mid', 'low']
     results = {}
 
     for period_key, period_name, date_condition in periods:
-        # Step 3 细分：是否调整了 prompt
-        query_prompt = f"""
-        WITH generate_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_generate_click'
-        ),
-        prompt_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_prompt_click'
-        )
-        SELECT
-            (SELECT COUNT(*) FROM generate_users) as total_generate_users,
-            (SELECT COUNT(*) FROM prompt_users) as prompt_users,
-            COUNT(*) as generate_with_prompt
-        FROM generate_users g
-        JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id
-        """
+        period_result = {}
 
-        # Step 5 细分：保存时是否修改了标签/描述
-        query_save_detail = f"""
-        WITH save_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_save_success'
-        ),
-        label_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_label_adjust'
-        ),
-        desc_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_description_adjust'
-        )
-        SELECT
-            (SELECT COUNT(*) FROM save_users) as total_save_users,
-            (SELECT COUNT(*) FROM save_users s JOIN label_users l ON s.user_pseudo_id = l.user_pseudo_id) as with_label_adjust,
-            (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust
-        """
+        for tier in tiers:
+            if tier == '大盘':
+                # 大盘 - 不过滤用户
+                tier_filter = ""
+                tier_join = ""
+                tier_cte = ""
+            else:
+                tier_cte = f"WITH {get_user_tier_cte()},"
+                tier_join = "INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id"
+                tier_filter = f"AND ut.tier = '{tier}'"
 
-        # 入口分布
-        query_entry = f"""
-        SELECT
-            event_name,
-            COUNT(*) as count,
-            COUNT(DISTINCT user_pseudo_id) as users
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE {date_condition}
-            AND event_name IN ('creation_voice_design_click', 'voice_library_voice_design_click')
-        GROUP BY event_name
-        """
+            # Prompt 调整
+            if tier == '大盘':
+                query_prompt = f"""
+                WITH generate_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_generate_click'
+                ),
+                prompt_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_prompt_click'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM generate_users) as total_generate_users,
+                    (SELECT COUNT(*) FROM prompt_users) as prompt_users,
+                    COUNT(*) as generate_with_prompt
+                FROM generate_users g
+                JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id
+                """
+            else:
+                query_prompt = f"""
+                WITH {get_user_tier_cte()},
+                generate_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'voice_design_generate_click'
+                        AND ut.tier = '{tier}'
+                ),
+                prompt_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'voice_design_prompt_click'
+                        AND ut.tier = '{tier}'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM generate_users) as total_generate_users,
+                    (SELECT COUNT(*) FROM prompt_users) as prompt_users,
+                    COUNT(*) as generate_with_prompt
+                FROM generate_users g
+                JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id
+                """
 
-        prompt_data = run_query(query_prompt)
-        save_data = run_query(query_save_detail)
-        entry_data = run_query(query_entry)
+            # 入口分布
+            if tier == '大盘':
+                query_entry = f"""
+                SELECT
+                    event_name,
+                    COUNT(*) as count,
+                    COUNT(DISTINCT user_pseudo_id) as users
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE {date_condition}
+                    AND event_name IN ('creation_voice_design_click', 'voice_library_voice_design_click')
+                GROUP BY event_name
+                """
+            else:
+                query_entry = f"""
+                WITH {get_user_tier_cte()}
+                SELECT
+                    e.event_name,
+                    COUNT(*) as count,
+                    COUNT(DISTINCT e.user_pseudo_id) as users
+                FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                WHERE {date_condition}
+                    AND e.event_name IN ('creation_voice_design_click', 'voice_library_voice_design_click')
+                    AND ut.tier = '{tier}'
+                GROUP BY e.event_name
+                """
 
-        results[period_name] = {
-            'prompt_adjustment': prompt_data[0] if prompt_data else {},
-            'save_adjustment': save_data[0] if save_data else {},
-            'entry_distribution': {row['event_name']: {'count': row['count'], 'users': row['users']} for row in entry_data}
-        }
+            prompt_data = run_query(query_prompt)
+            entry_data = run_query(query_entry)
+
+            period_result[tier] = {
+                'prompt_adjustment': prompt_data[0] if prompt_data else {},
+                'entry_distribution': {row['event_name']: {'count': row['count'], 'users': row['users']} for row in entry_data}
+            }
+
+        results[period_name] = period_result
 
     return results
 
 def get_rating_data():
-    """获取点赞点踩数据 - 使用 action 参数（int类型：2=点赞，1=点踩）"""
+    """获取点赞点踩数据 - 使用 action 参数（int类型：1=点赞，2=点踩）"""
 
     query = """
     SELECT
@@ -185,9 +294,9 @@ def get_rating_data():
     for row in rows:
         action = row.get('action')
         count = row.get('count', 0)
-        if action == 2:  # 点赞
+        if action == 1:  # 点赞
             result['like'] += count
-        elif action == 1:  # 点踩
+        elif action == 2:  # 点踩
             result['dislike'] += count
         else:
             result['unknown'] += count
@@ -310,49 +419,74 @@ def get_deep_metrics():
     return results
 
 def get_trend_data():
-    """获取趋势数据（最近14天每天的数据）"""
+    """获取趋势数据（最近14天每天的数据），支持分层"""
 
-    query = """
-    SELECT
-        event_date,
-        event_name,
-        COUNT(*) as count,
-        COUNT(DISTINCT user_pseudo_id) as users
-    FROM `noiz-430406.analytics_510746763.events_intraday_*`
-    WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-        AND event_name IN (
-            'page_voice_design_exposure',
-            'creation_voice_design_click',
-            'voice_library_voice_design_click',
-            'voice_design_generate_click',
-            'voice_design_select_click',
-            'voice_design_save_success'
-        )
-    GROUP BY event_date, event_name
-    ORDER BY event_date
-    """
+    tiers = ['大盘', 'high', 'mid', 'low']
+    events = [
+        'page_voice_design_exposure',
+        'creation_voice_design_click',
+        'voice_library_voice_design_click',
+        'voice_design_generate_click',
+        'voice_design_select_click',
+        'voice_design_save_success'
+    ]
 
-    rows = run_query(query)
-    result = {}
-    for row in rows:
-        date = row['event_date']
-        if date not in result:
-            result[date] = {}
-        result[date][row['event_name']] = {'count': row['count'], 'users': row['users']}
+    results = {}
 
-    # 计算每天的"进入"复合指标
-    for date in result:
-        creation = result[date].get('creation_voice_design_click', {'count': 0, 'users': 0})
-        library = result[date].get('voice_library_voice_design_click', {'count': 0, 'users': 0})
-        result[date]['entry_composite'] = {
-            'count': creation['count'] + library['count'],
-            'users': creation['users'] + library['users']
-        }
+    for tier in tiers:
+        if tier == '大盘':
+            query = f"""
+            SELECT
+                event_date,
+                event_name,
+                COUNT(*) as count,
+                COUNT(DISTINCT user_pseudo_id) as users
+            FROM `noiz-430406.analytics_510746763.events_intraday_*`
+            WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+                AND event_name IN ({','.join([f'"{e}"' for e in events])})
+            GROUP BY event_date, event_name
+            ORDER BY event_date
+            """
+        else:
+            query = f"""
+            WITH {get_user_tier_cte()}
+            SELECT
+                e.event_date,
+                e.event_name,
+                COUNT(*) as count,
+                COUNT(DISTINCT e.user_pseudo_id) as users
+            FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+            INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+            WHERE e._TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+                AND e.event_name IN ({','.join([f'"{ev}"' for ev in events])})
+                AND ut.tier = '{tier}'
+            GROUP BY e.event_date, e.event_name
+            ORDER BY e.event_date
+            """
 
-    return result
+        rows = run_query(query)
+        tier_result = {}
+        for row in rows:
+            date = row['event_date']
+            if date not in tier_result:
+                tier_result[date] = {}
+            tier_result[date][row['event_name']] = {'count': row['count'], 'users': row['users']}
+
+        # 计算每天的"进入"复合指标
+        for date in tier_result:
+            creation = tier_result[date].get('creation_voice_design_click', {'count': 0, 'users': 0})
+            library = tier_result[date].get('voice_library_voice_design_click', {'count': 0, 'users': 0})
+            tier_result[date]['entry_composite'] = {
+                'count': creation['count'] + library['count'],
+                'users': creation['users'] + library['users']
+            }
+
+        results[tier] = tier_result
+
+    return results
 
 def get_exit_distribution():
-    """获取离开路径分布 - 按时间周期"""
+    """获取离开路径分布 - 按时间周期，支持分层"""
 
     periods = [
         ('yesterday', '昨天', '_TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))'),
@@ -360,22 +494,43 @@ def get_exit_distribution():
         ('7', '近7天', '_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'),
     ]
 
+    tiers = ['大盘', 'high', 'mid', 'low']
     results = {}
 
     for period_key, period_name, date_condition in periods:
-        query = f"""
-        SELECT
-            event_name,
-            COUNT(*) as count,
-            COUNT(DISTINCT user_pseudo_id) as users
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE {date_condition}
-            AND event_name IN ('voice_design_save_voice_use', 'voice_design_complete_back')
-        GROUP BY event_name
-        """
+        period_result = {}
 
-        rows = run_query(query)
-        results[period_name] = {row['event_name']: {'count': row['count'], 'users': row['users']} for row in rows}
+        for tier in tiers:
+            if tier == '大盘':
+                query = f"""
+                SELECT
+                    event_name,
+                    COUNT(*) as count,
+                    COUNT(DISTINCT user_pseudo_id) as users
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE {date_condition}
+                    AND event_name IN ('voice_design_save_voice_use', 'voice_design_complete_back')
+                GROUP BY event_name
+                """
+            else:
+                query = f"""
+                WITH {get_user_tier_cte()}
+                SELECT
+                    e.event_name,
+                    COUNT(*) as count,
+                    COUNT(DISTINCT e.user_pseudo_id) as users
+                FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                WHERE {date_condition}
+                    AND e.event_name IN ('voice_design_save_voice_use', 'voice_design_complete_back')
+                    AND ut.tier = '{tier}'
+                GROUP BY e.event_name
+                """
+
+            rows = run_query(query)
+            period_result[tier] = {row['event_name']: {'count': row['count'], 'users': row['users']} for row in rows}
+
+        results[period_name] = period_result
 
     return results
 
@@ -385,15 +540,40 @@ def main():
     # 使用北京时间
     beijing_now = datetime.now(BEIJING_TZ)
 
+    print("  获取用户分层统计...")
+    user_tiers = get_user_tier_stats()
+
+    print("  获取漏斗数据（含分层）...")
+    funnel = get_funnel_data()
+
+    print("  获取步骤细分（含分层）...")
+    step_details = get_step_details()
+
+    print("  获取点赞点踩数据...")
+    rating = get_rating_data()
+
+    print("  获取付费弹窗数据...")
+    upgrade = get_upgrade_data()
+
+    print("  获取深层指标...")
+    deep_metrics = get_deep_metrics()
+
+    print("  获取趋势数据（含分层）...")
+    trend = get_trend_data()
+
+    print("  获取离开分布（含分层）...")
+    exit_distribution = get_exit_distribution()
+
     data = {
         'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S') + ' (北京时间)',
-        'funnel': get_funnel_data(),
-        'step_details': get_step_details(),
-        'rating': get_rating_data(),
-        'upgrade': get_upgrade_data(),
-        'deep_metrics': get_deep_metrics(),
-        'trend': get_trend_data(),
-        'exit_distribution': get_exit_distribution(),
+        'user_tiers': user_tiers,
+        'funnel': funnel,
+        'step_details': step_details,
+        'rating': rating,
+        'upgrade': upgrade,
+        'deep_metrics': deep_metrics,
+        'trend': trend,
+        'exit_distribution': exit_distribution,
     }
 
     # 保存为 JSON - 使用脚本所在目录
