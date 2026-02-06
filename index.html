@@ -724,7 +724,7 @@
         // 加载数据
         async function loadData() {
             try {
-                const response = await fetch('data/dashboard_data.json');
+                const response = await fetch('data/dashboard_data.json?v=' + Date.now());
                 dashboardData = await response.json();
                 document.getElementById('updateTime').textContent = `数据更新时间：${dashboardData.update_time}`;
                 renderTierStats();
