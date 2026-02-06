@@ -1152,11 +1152,16 @@
         function renderTrend() {
             // 兼容新旧格式
             let trend = dashboardData.trend;
+            console.log('renderTrend - currentTier:', currentTier);
+            console.log('renderTrend - trend keys:', Object.keys(trend));
+            console.log('renderTrend - trend[currentTier] exists:', !!trend[currentTier]);
             // 新格式：trend[tier][date]
             if (trend[currentTier]) {
                 trend = trend[currentTier];
+                console.log('renderTrend - using tier data, dates:', Object.keys(trend).slice(0,3));
             } else if (trend['大盘']) {
                 trend = trend['大盘'];
+                console.log('renderTrend - fallback to 大盘');
             }
             // 旧格式保持不变
 
