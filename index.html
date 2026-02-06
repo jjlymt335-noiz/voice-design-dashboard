@@ -1350,10 +1350,13 @@
 
         // 切换用户分层
         document.querySelectorAll('.tier-btn').forEach(btn => {
+            console.log('绑定分层按钮:', btn.dataset.tier);
             btn.addEventListener('click', function() {
+                console.log('=== 点击了分层按钮 ===', this.dataset.tier);
                 document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentTier = this.dataset.tier;
+                console.log('currentTier 已更新为:', currentTier);
                 renderDashboard();
             });
         });
