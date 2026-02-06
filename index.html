@@ -525,7 +525,7 @@
         <div class="update-time" id="updateTime">数据更新时间：加载中...</div>
     </div>
 
-    <!-- 用户分层选择器 -->
+    <!-- 用户分层口径说明 -->
     <div class="tier-selector-container">
         <div class="tier-definition">
             <div class="tier-definition-title">📊 用户分层口径说明</div>
@@ -547,33 +547,40 @@
                     <span class="tier-def-badge low">低频</span>
                     <span>≤1.5次/天</span>
                 </div>
+                <div class="tier-def-item">
+                    <span class="tier-def-badge none" style="background: #a0aec0;">未生成</span>
+                    <span>无生成行为</span>
+                </div>
                 <div class="tier-def-item" style="color: #718096;">
                     <span>（基于近14天数据计算）</span>
                 </div>
             </div>
         </div>
-        <div class="tier-selector">
-            <button class="tier-btn active" data-tier="大盘">大盘</button>
-            <button class="tier-btn" data-tier="high">高频</button>
-            <button class="tier-btn" data-tier="mid">中频</button>
-            <button class="tier-btn" data-tier="low">低频</button>
-        </div>
-        <div id="tierStats" style="color: #718096; font-size: 11px; margin-top: 8px;"></div>
-    </div>
-
-    <div class="period-selector">
-        <button class="period-btn" data-period="昨天">昨天</button>
-        <button class="period-btn active" data-period="近3天">近3天</button>
-        <button class="period-btn" data-period="近7天">近7天</button>
-    </div>
-    <div style="text-align: center; color: #718096; font-size: 12px; margin-top: -20px; margin-bottom: 20px;">
-        * 昨天 = 上一个完整数据日；近3天/7天 = 往前推相应天数的完整数据（不含今天）
     </div>
 
     <div class="dashboard">
         <!-- 核心漏斗 -->
         <div class="section">
             <div class="section-title">核心漏斗</div>
+            <!-- 选择器移到漏斗卡片内 -->
+            <div style="display: flex; justify-content: center; gap: 20px; align-items: center; margin-bottom: 15px; flex-wrap: wrap;">
+                <div class="tier-selector">
+                    <button class="tier-btn active" data-tier="大盘">大盘</button>
+                    <button class="tier-btn" data-tier="high">高频</button>
+                    <button class="tier-btn" data-tier="mid">中频</button>
+                    <button class="tier-btn" data-tier="low">低频</button>
+                    <button class="tier-btn" data-tier="none">未生成</button>
+                </div>
+                <div class="period-selector" style="margin-bottom: 0;">
+                    <button class="period-btn" data-period="昨天">昨天</button>
+                    <button class="period-btn active" data-period="近3天">近3天</button>
+                    <button class="period-btn" data-period="近7天">近7天</button>
+                </div>
+            </div>
+            <div id="tierStats" style="color: #718096; font-size: 11px; text-align: center; margin-bottom: 10px;"></div>
+            <div style="text-align: center; color: #718096; font-size: 11px; margin-bottom: 15px;">
+                * 昨天 = 上一个完整数据日；近3天/7天 = 往前推相应天数的完整数据（不含今天）
+            </div>
             <div class="funnel-container">
                 <div class="funnel-chart" id="funnelChart"></div>
                 <div class="funnel-details" id="funnelDetails"></div>
@@ -751,15 +758,19 @@
                 return;
             }
 
-            const total = stats.high.users + stats.mid.users + stats.low.users;
-            const highPct = ((stats.high.users / total) * 100).toFixed(1);
-            const midPct = ((stats.mid.users / total) * 100).toFixed(1);
-            const lowPct = ((stats.low.users / total) * 100).toFixed(1);
+            const high = stats.high?.users || 0;
+            const mid = stats.mid?.users || 0;
+            const low = stats.low?.users || 0;
+            const none = stats.none?.users || 0;
+            const total = high + mid + low + none;
+
+            const pct = (n) => ((n / total) * 100).toFixed(1);
 
             document.getElementById('tierStats').innerHTML = `
-                分层用户数：高频 ${stats.high.users.toLocaleString()} (${highPct}%) |
-                中频 ${stats.mid.users.toLocaleString()} (${midPct}%) |
-                低频 ${stats.low.users.toLocaleString()} (${lowPct}%) |
+                分层用户数：高频 ${high.toLocaleString()} (${pct(high)}%) |
+                中频 ${mid.toLocaleString()} (${pct(mid)}%) |
+                低频 ${low.toLocaleString()} (${pct(low)}%) |
+                未生成 ${none.toLocaleString()} (${pct(none)}%) |
                 合计 ${total.toLocaleString()}
             `;
         }

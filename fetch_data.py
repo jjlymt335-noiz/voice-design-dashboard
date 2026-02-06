@@ -17,7 +17,8 @@ BEIJING_TZ = timezone(timedelta(hours=8))
 TIER_DEFINITIONS = {
     'high': {'label': '高频', 'description': '>=4次/天', 'condition': 'avg_daily_generates >= 4'},
     'mid': {'label': '中频', 'description': '1.5~4次/天', 'condition': 'avg_daily_generates > 1.5 AND avg_daily_generates < 4'},
-    'low': {'label': '低频', 'description': '<=1.5次/天', 'condition': 'avg_daily_generates <= 1.5'},
+    'low': {'label': '低频', 'description': '<=1.5次/天', 'condition': 'avg_daily_generates <= 1.5 AND avg_daily_generates > 0'},
+    'none': {'label': '未生成', 'description': '无生成行为', 'condition': 'avg_daily_generates = 0'},
 }
 
 def run_query(query):
@@ -30,9 +31,21 @@ def run_query(query):
         return []
 
 def get_user_tier_cte():
-    """返回用户分层的 CTE SQL（基于近14天数据计算平均每天generate次数）"""
+    """返回用户分层的 CTE SQL（基于近14天数据计算平均每天generate次数）
+
+    修复：包含所有曝光用户，没有generate行为的用户归入低频
+    """
     return """
-    user_tier_base AS (
+    all_exposed_users AS (
+        -- 所有在近14天有曝光的用户
+        SELECT DISTINCT user_pseudo_id
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name = 'page_voice_design_exposure'
+    ),
+    user_generate_stats AS (
+        -- 有generate行为用户的统计
         SELECT
             user_pseudo_id,
             COUNT(*) as total_generates,
@@ -45,15 +58,18 @@ def get_user_tier_cte():
         GROUP BY user_pseudo_id
     ),
     user_tiers AS (
+        -- 所有曝光用户的分层，无generate行为的独立为"未生成"
         SELECT
-            user_pseudo_id,
-            avg_daily_generates,
+            e.user_pseudo_id,
+            COALESCE(g.avg_daily_generates, 0) as avg_daily_generates,
             CASE
-                WHEN avg_daily_generates >= 4 THEN 'high'
-                WHEN avg_daily_generates > 1.5 AND avg_daily_generates < 4 THEN 'mid'
-                ELSE 'low'
+                WHEN g.avg_daily_generates >= 4 THEN 'high'
+                WHEN g.avg_daily_generates > 1.5 AND g.avg_daily_generates < 4 THEN 'mid'
+                WHEN g.avg_daily_generates > 0 THEN 'low'
+                ELSE 'none'
             END as tier
-        FROM user_tier_base
+        FROM all_exposed_users e
+        LEFT JOIN user_generate_stats g ON e.user_pseudo_id = g.user_pseudo_id
     )
     """
 
@@ -108,7 +124,7 @@ def get_funnel_data():
         ('7', '近7天'),
     ]
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     results = {}
 
     for period_key, period_name in periods:
@@ -170,7 +186,7 @@ def get_step_details():
         ('7', '近7天', '_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'),
     ]
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     results = {}
 
     for period_key, period_name, date_condition in periods:
@@ -278,7 +294,7 @@ def get_step_details():
 def get_rating_data():
     """获取点赞点踩数据 - 使用 action 参数（int类型：1=点赞，2=点踩），支持分层"""
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     results = {}
 
     for tier in tiers:
@@ -332,7 +348,7 @@ def get_rating_data():
 def get_upgrade_data():
     """获取付费弹窗数据 - 支持分层"""
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     events = ['voice_design_upgrade_popup', 'voice_design_upgrade_confirm_click', 'voice_design_upgrade_cancel_click']
     results = {}
 
@@ -381,7 +397,7 @@ def get_deep_metrics():
         ('7', '近7天', '_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'),
     ]
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     results = {}
 
     for period_key, period_name, date_condition in periods:
@@ -497,7 +513,7 @@ def get_deep_metrics():
 def get_trend_data():
     """获取趋势数据（最近14天每天的数据），支持分层"""
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     events = [
         'page_voice_design_exposure',
         'creation_voice_design_click',
@@ -570,7 +586,7 @@ def get_exit_distribution():
         ('7', '近7天', '_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'),
     ]
 
-    tiers = ['大盘', 'high', 'mid', 'low']
+    tiers = ['大盘', 'high', 'mid', 'low', 'none']
     results = {}
 
     for period_key, period_name, date_condition in periods:
