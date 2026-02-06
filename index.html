@@ -976,7 +976,7 @@
             `;
 
             // 生成行为
-            const prompt = details.prompt_adjustment;
+            const prompt = details.prompt_adjustment || {};
             const promptRate = prompt.total_generate_users ? ((prompt.generate_with_prompt / prompt.total_generate_users) * 100).toFixed(1) : 0;
             document.getElementById('generateDetails').innerHTML = `
                 <div class="detail-row">
@@ -990,7 +990,7 @@
             `;
 
             // 保存行为
-            const save = details.save_adjustment;
+            const save = details.save_adjustment || {};
             const labelRate = save.total_save_users ? ((save.with_label_adjust / save.total_save_users) * 100).toFixed(1) : 0;
             const descRate = save.total_save_users ? ((save.with_desc_adjust / save.total_save_users) * 100).toFixed(1) : 0;
             document.getElementById('saveDetails').innerHTML = `
@@ -1025,8 +1025,9 @@
         // 渲染评价
         function renderRating() {
             const rating = dashboardData.rating;
-            // 获取近7天选择音色的用户数
-            const selectUsers = dashboardData.funnel['近7天']?.['voice_design_select_click']?.users || 0;
+            // 获取近7天选择音色的用户数（使用大盘数据）
+            const funnelData = getTieredData(dashboardData.funnel, '近7天', '大盘') || {};
+            const selectUsers = funnelData['voice_design_select_click']?.users || 0;
 
             // 好评率 = 点赞 / (点赞 + 点踩)
             const validTotal = rating.like + rating.dislike;
