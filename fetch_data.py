@@ -276,61 +276,104 @@ def get_step_details():
     return results
 
 def get_rating_data():
-    """获取点赞点踩数据 - 使用 action 参数（int类型：1=点赞，2=点踩）"""
+    """获取点赞点踩数据 - 使用 action 参数（int类型：1=点赞，2=点踩），支持分层"""
 
-    query = """
-    SELECT
-        (SELECT ep.value.int_value FROM UNNEST(event_params) ep WHERE ep.key = 'action') as action,
-        COUNT(*) as count
-    FROM `noiz-430406.analytics_510746763.events_intraday_*`
-    WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
-        AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
-        AND event_name = 'voice_design_listen_grade'
-    GROUP BY action
-    """
+    tiers = ['大盘', 'high', 'mid', 'low']
+    results = {}
 
-    rows = run_query(query)
-    result = {'like': 0, 'dislike': 0, 'unknown': 0, 'total': 0}
-    for row in rows:
-        action = row.get('action')
-        count = row.get('count', 0)
-        if action == 1:  # 点赞
-            result['like'] += count
-        elif action == 2:  # 点踩
-            result['dislike'] += count
+    for tier in tiers:
+        if tier == '大盘':
+            query = """
+            SELECT
+                (SELECT ep.value.int_value FROM UNNEST(event_params) ep WHERE ep.key = 'action') as action,
+                COUNT(*) as count
+            FROM `noiz-430406.analytics_510746763.events_intraday_*`
+            WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                AND event_name = 'voice_design_listen_grade'
+            GROUP BY action
+            """
         else:
-            result['unknown'] += count
-        result['total'] += count
+            query = f"""
+            WITH {get_user_tier_cte()}
+            SELECT
+                (SELECT ep.value.int_value FROM UNNEST(e.event_params) ep WHERE ep.key = 'action') as action,
+                COUNT(*) as count
+            FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+            INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+            WHERE e._TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+                AND e._TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                AND e.event_name = 'voice_design_listen_grade'
+                AND ut.tier = '{tier}'
+            GROUP BY action
+            """
 
-    # 计算好评率：点赞 / (点赞 + 点踩)
-    valid_total = result['like'] + result['dislike']
-    result['like_rate'] = round(result['like'] / valid_total * 100, 1) if valid_total > 0 else 0
+        rows = run_query(query)
+        tier_result = {'like': 0, 'dislike': 0, 'unknown': 0, 'total': 0}
+        for row in rows:
+            action = row.get('action')
+            count = row.get('count', 0)
+            if action == 1:  # 点赞
+                tier_result['like'] += count
+            elif action == 2:  # 点踩
+                tier_result['dislike'] += count
+            else:
+                tier_result['unknown'] += count
+            tier_result['total'] += count
 
-    return result
+        # 计算好评率：点赞 / (点赞 + 点踩)
+        valid_total = tier_result['like'] + tier_result['dislike']
+        tier_result['like_rate'] = round(tier_result['like'] / valid_total * 100, 1) if valid_total > 0 else 0
+
+        results[tier] = tier_result
+
+    return results
 
 def get_upgrade_data():
-    """获取付费弹窗数据"""
+    """获取付费弹窗数据 - 支持分层"""
 
-    query = """
-    SELECT
-        event_name,
-        COUNT(*) as count,
-        COUNT(DISTINCT user_pseudo_id) as users
-    FROM `noiz-430406.analytics_510746763.events_intraday_*`
-    WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
-        AND event_name IN ('voice_design_upgrade_popup', 'voice_design_upgrade_confirm_click', 'voice_design_upgrade_cancel_click')
-    GROUP BY event_name
-    """
+    tiers = ['大盘', 'high', 'mid', 'low']
+    events = ['voice_design_upgrade_popup', 'voice_design_upgrade_confirm_click', 'voice_design_upgrade_cancel_click']
+    results = {}
 
-    rows = run_query(query)
-    result = {}
-    for row in rows:
-        result[row['event_name']] = {'count': row['count'], 'users': row['users']}
+    for tier in tiers:
+        if tier == '大盘':
+            query = f"""
+            SELECT
+                event_name,
+                COUNT(*) as count,
+                COUNT(DISTINCT user_pseudo_id) as users
+            FROM `noiz-430406.analytics_510746763.events_intraday_*`
+            WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+                AND event_name IN ({','.join([f'"{e}"' for e in events])})
+            GROUP BY event_name
+            """
+        else:
+            query = f"""
+            WITH {get_user_tier_cte()}
+            SELECT
+                e.event_name,
+                COUNT(*) as count,
+                COUNT(DISTINCT e.user_pseudo_id) as users
+            FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+            INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+            WHERE e._TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+                AND e.event_name IN ({','.join([f'"{ev}"' for ev in events])})
+                AND ut.tier = '{tier}'
+            GROUP BY e.event_name
+            """
 
-    return result
+        rows = run_query(query)
+        tier_result = {}
+        for row in rows:
+            tier_result[row['event_name']] = {'count': row['count'], 'users': row['users']}
+
+        results[tier] = tier_result
+
+    return results
 
 def get_deep_metrics():
-    """获取第二层深层指标 - 按时间周期"""
+    """获取第二层深层指标 - 按时间周期，支持分层"""
 
     periods = [
         ('yesterday', '昨天', '_TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 1 DAY))'),
@@ -338,83 +381,116 @@ def get_deep_metrics():
         ('7', '近7天', '_TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'),
     ]
 
+    tiers = ['大盘', 'high', 'mid', 'low']
     results = {}
 
     for period_key, period_name, date_condition in periods:
-        # 完成率
-        query_completion = f"""
-        WITH exposure_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'page_voice_design_exposure'
-        ),
-        save_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_save_success'
-        )
-        SELECT
-            (SELECT COUNT(*) FROM exposure_users) as exposure_users,
-            (SELECT COUNT(*) FROM save_users) as save_users
-        """
+        period_result = {}
 
-        # Design音色TTS使用量
-        query_tts_from_design = f"""
-        SELECT
-            COUNT(*) as tts_from_design
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE {date_condition}
-            AND event_name = 'tts_generate_click'
-            AND (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from') = '/voice/design'
-        """
+        for tier in tiers:
+            # 完成率 - 支持分层
+            if tier == '大盘':
+                query_completion = f"""
+                WITH exposure_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'page_voice_design_exposure'
+                ),
+                save_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_save_success'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM exposure_users) as exposure_users,
+                    (SELECT COUNT(*) FROM save_users) as save_users
+                """
+            else:
+                query_completion = f"""
+                WITH {get_user_tier_cte()},
+                exposure_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'page_voice_design_exposure'
+                        AND ut.tier = '{tier}'
+                ),
+                save_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'voice_design_save_success'
+                        AND ut.tier = '{tier}'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM exposure_users) as exposure_users,
+                    (SELECT COUNT(*) FROM save_users) as save_users
+                """
 
-        query_tts_total = f"""
-        SELECT COUNT(*) as total_tts
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE {date_condition}
-            AND event_name = 'tts_generate_click'
-        """
+            completion = run_query(query_completion)
 
-        # 通过design入口进入付费的比例
-        query_design_payment = f"""
-        WITH design_upgrade_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name = 'voice_design_upgrade_confirm_click'
-        ),
-        all_payment_users AS (
-            SELECT DISTINCT user_pseudo_id
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE {date_condition}
-                AND event_name LIKE '%payment_success%'
-        )
-        SELECT
-            (SELECT COUNT(*) FROM design_upgrade_users) as design_upgrade_users,
-            (SELECT COUNT(*) FROM all_payment_users) as all_payment_users,
-            COUNT(*) as design_to_payment
-        FROM design_upgrade_users d
-        JOIN all_payment_users p ON d.user_pseudo_id = p.user_pseudo_id
-        """
+            # TTS和Payment数据只在大盘时获取（不需要分层）
+            if tier == '大盘':
+                query_tts_from_design = f"""
+                SELECT COUNT(*) as tts_from_design
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE {date_condition}
+                    AND event_name = 'tts_generate_click'
+                    AND (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from') = '/voice/design'
+                """
 
-        completion = run_query(query_completion)
-        tts_design = run_query(query_tts_from_design)
-        tts_total = run_query(query_tts_total)
-        payment = run_query(query_design_payment)
+                query_tts_total = f"""
+                SELECT COUNT(*) as total_tts
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE {date_condition}
+                    AND event_name = 'tts_generate_click'
+                """
 
-        results[period_name] = {
-            'completion': completion[0] if completion else {},
-            'tts_from_design': tts_design[0]['tts_from_design'] if tts_design else 0,
-            'tts_total': tts_total[0]['total_tts'] if tts_total else 0,
-            'payment': payment[0] if payment else {},
-            # 占位：需要埋点支持的指标
-            'design_voice_users': None,
-            'avg_design_voices': None,
-            'design_tts_download_rate': None,
-            'total_tts_download_rate': None,
-        }
+                query_design_payment = f"""
+                WITH design_upgrade_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_upgrade_confirm_click'
+                ),
+                all_payment_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name LIKE '%payment_success%'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM design_upgrade_users) as design_upgrade_users,
+                    (SELECT COUNT(*) FROM all_payment_users) as all_payment_users,
+                    COUNT(*) as design_to_payment
+                FROM design_upgrade_users d
+                JOIN all_payment_users p ON d.user_pseudo_id = p.user_pseudo_id
+                """
+
+                tts_design = run_query(query_tts_from_design)
+                tts_total = run_query(query_tts_total)
+                payment = run_query(query_design_payment)
+
+                period_result[tier] = {
+                    'completion': completion[0] if completion else {},
+                    'tts_from_design': tts_design[0]['tts_from_design'] if tts_design else 0,
+                    'tts_total': tts_total[0]['total_tts'] if tts_total else 0,
+                    'payment': payment[0] if payment else {},
+                    'design_voice_users': None,
+                    'avg_design_voices': None,
+                    'design_tts_download_rate': None,
+                    'total_tts_download_rate': None,
+                }
+            else:
+                period_result[tier] = {
+                    'completion': completion[0] if completion else {},
+                }
+
+        results[period_name] = period_result
 
     return results
 

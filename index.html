@@ -1024,9 +1024,11 @@
 
         // 渲染评价
         function renderRating() {
-            const rating = dashboardData.rating;
-            // 获取近7天选择音色的用户数（使用大盘数据）
-            const funnelData = getTieredData(dashboardData.funnel, '近7天', '大盘') || {};
+            // 支持分层数据
+            const ratingData = dashboardData.rating;
+            const rating = ratingData[currentTier] || ratingData['大盘'] || ratingData;
+            // 获取选择音色的用户数（按当前分层）
+            const funnelData = getTieredData(dashboardData.funnel, '近7天', currentTier) || {};
             const selectUsers = funnelData['voice_design_select_click']?.users || 0;
 
             // 好评率 = 点赞 / (点赞 + 点踩)
@@ -1107,7 +1109,9 @@
 
         // 渲染付费弹窗
         function renderUpgrade() {
-            const upgrade = dashboardData.upgrade;
+            // 支持分层数据
+            const upgradeData = dashboardData.upgrade;
+            const upgrade = upgradeData[currentTier] || upgradeData['大盘'] || upgradeData;
             const popup = upgrade['voice_design_upgrade_popup'] || { count: 0, users: 0 };
             const confirm = upgrade['voice_design_upgrade_confirm_click'] || { count: 0, users: 0 };
             const cancel = upgrade['voice_design_upgrade_cancel_click'] || { count: 0, users: 0 };
@@ -1285,30 +1289,33 @@
 
         // 渲染第二层指标
         function renderDeepMetrics() {
-            // 使用深层指标独立的周期变量
-            let metrics = dashboardData.deep_metrics;
+            // 使用深层指标独立的周期变量，支持分层
+            let periodMetrics = dashboardData.deep_metrics;
 
-            // 检查是否是新格式（按周期分组）
-            if (metrics[deepMetricsPeriod]) {
-                metrics = metrics[deepMetricsPeriod];
-            } else if (metrics['近7天']) {
-                // 兼容旧数据格式
-                metrics = metrics['近7天'];
+            // 获取周期数据
+            if (periodMetrics[deepMetricsPeriod]) {
+                periodMetrics = periodMetrics[deepMetricsPeriod];
+            } else if (periodMetrics['近7天']) {
+                periodMetrics = periodMetrics['近7天'];
             }
 
-            // 完成率
+            // 获取分层数据（如果有），否则使用旧格式
+            let metrics = periodMetrics[currentTier] || periodMetrics['大盘'] || periodMetrics;
+            let baseMetrics = periodMetrics['大盘'] || periodMetrics; // 大盘数据用于TTS等指标
+
+            // 完成率（支持分层）
             const completion = metrics.completion || {};
             const completionRate = completion.exposure_users ? ((completion.save_users / completion.exposure_users) * 100).toFixed(1) : 0;
             document.getElementById('completionRate').textContent = completionRate + '%';
             document.getElementById('completionDetail').textContent = `${completion.save_users?.toLocaleString() || 0} / ${completion.exposure_users?.toLocaleString() || 0}`;
 
-            // TTS from design
-            const ttsRate = metrics.tts_total ? ((metrics.tts_from_design / metrics.tts_total) * 100).toFixed(2) : 0;
-            document.getElementById('ttsFromDesign').textContent = (metrics.tts_from_design || 0).toLocaleString();
+            // TTS from design（使用大盘数据）
+            const ttsRate = baseMetrics.tts_total ? ((baseMetrics.tts_from_design / baseMetrics.tts_total) * 100).toFixed(2) : 0;
+            document.getElementById('ttsFromDesign').textContent = (baseMetrics.tts_from_design || 0).toLocaleString();
             document.getElementById('ttsFromDesignPct').textContent = `占总 TTS 的 ${ttsRate}%`;
 
-            // 付费
-            const payment = metrics.payment || {};
+            // 付费（使用大盘数据）
+            const payment = baseMetrics.payment || {};
             document.getElementById('designPayment').textContent = payment.design_to_payment || 0;
             document.getElementById('designPaymentDetail').textContent = `点击升级 ${payment.design_upgrade_users || 0} 人`;
 
