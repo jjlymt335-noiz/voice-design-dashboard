@@ -525,15 +525,6 @@
         <div class="update-time" id="updateTime">数据更新时间：加载中...</div>
     </div>
 
-    <div class="period-selector">
-        <button class="period-btn" data-period="昨天">昨天</button>
-        <button class="period-btn active" data-period="近3天">近3天</button>
-        <button class="period-btn" data-period="近7天">近7天</button>
-    </div>
-    <div style="text-align: center; color: #718096; font-size: 12px; margin-top: -20px; margin-bottom: 20px;">
-        * 昨天 = 上一个完整数据日；近3天/7天 = 往前推相应天数的完整数据（不含今天）
-    </div>
-
     <!-- 用户分层选择器 -->
     <div class="tier-selector-container">
         <div class="tier-definition">
@@ -568,6 +559,15 @@
             <button class="tier-btn" data-tier="low">低频</button>
         </div>
         <div id="tierStats" style="color: #718096; font-size: 11px; margin-top: 8px;"></div>
+    </div>
+
+    <div class="period-selector">
+        <button class="period-btn" data-period="昨天">昨天</button>
+        <button class="period-btn active" data-period="近3天">近3天</button>
+        <button class="period-btn" data-period="近7天">近7天</button>
+    </div>
+    <div style="text-align: center; color: #718096; font-size: 12px; margin-top: -20px; margin-bottom: 20px;">
+        * 昨天 = 上一个完整数据日；近3天/7天 = 往前推相应天数的完整数据（不含今天）
     </div>
 
     <div class="dashboard">
@@ -629,9 +629,17 @@
         <div class="section">
             <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>趋势变化（近14天）</span>
-                <div class="view-toggle" id="trendToggle">
-                    <button class="toggle-btn active" data-view="absolute">绝对数量</button>
-                    <button class="toggle-btn" data-view="percentage">比例视图</button>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="view-toggle" id="trendTierToggle">
+                        <button class="toggle-btn active" data-tier="大盘">大盘</button>
+                        <button class="toggle-btn" data-tier="high">高频</button>
+                        <button class="toggle-btn" data-tier="mid">中频</button>
+                        <button class="toggle-btn" data-tier="low">低频</button>
+                    </div>
+                    <div class="view-toggle" id="trendToggle">
+                        <button class="toggle-btn active" data-view="absolute">绝对数量</button>
+                        <button class="toggle-btn" data-view="percentage">比例视图</button>
+                    </div>
                 </div>
             </div>
             <div class="chart-container" id="trendChart"></div>
@@ -1148,22 +1156,18 @@
         let trendViewMode = 'absolute'; // 'absolute' or 'percentage'
         let trendChart = null;
 
+        // 趋势图独立的分层选择
+        let trendTier = '大盘';
+
         // 渲染趋势图
         function renderTrend() {
-            // 兼容新旧格式
+            // 使用趋势图独立的分层变量
             let trend = dashboardData.trend;
-            console.log('renderTrend - currentTier:', currentTier);
-            console.log('renderTrend - trend keys:', Object.keys(trend));
-            console.log('renderTrend - trend[currentTier] exists:', !!trend[currentTier]);
-            // 新格式：trend[tier][date]
-            if (trend[currentTier]) {
-                trend = trend[currentTier];
-                console.log('renderTrend - using tier data, dates:', Object.keys(trend).slice(0,3));
+            if (trend[trendTier]) {
+                trend = trend[trendTier];
             } else if (trend['大盘']) {
                 trend = trend['大盘'];
-                console.log('renderTrend - fallback to 大盘');
             }
-            // 旧格式保持不变
 
             const dates = Object.keys(trend).sort();
 
@@ -1199,11 +1203,6 @@
                     });
                 }
             };
-
-            // 调试：打印曝光数据
-            const exposureData = dates.map(d => trend[d]?.['page_voice_design_exposure']?.users || 0);
-            console.log('renderTrend - 曝光数据 (前3天):', exposureData.slice(0, 3));
-            console.log('renderTrend - 曝光最大值:', Math.max(...exposureData));
 
             if (trendChart) {
                 trendChart.dispose();
@@ -1295,6 +1294,16 @@
             }
         });
 
+        // 趋势图分层切换事件
+        document.getElementById('trendTierToggle').addEventListener('click', function(e) {
+            if (e.target.classList.contains('toggle-btn')) {
+                document.querySelectorAll('#trendTierToggle .toggle-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                trendTier = e.target.dataset.tier;
+                renderTrend();
+            }
+        });
+
         let deepMetricsPeriod = '近3天'; // 深层指标独立的周期选择
 
         // 渲染第二层指标
@@ -1355,13 +1364,10 @@
 
         // 切换用户分层
         document.querySelectorAll('.tier-btn').forEach(btn => {
-            console.log('绑定分层按钮:', btn.dataset.tier);
             btn.addEventListener('click', function() {
-                console.log('=== 点击了分层按钮 ===', this.dataset.tier);
                 document.querySelectorAll('.tier-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentTier = this.dataset.tier;
-                console.log('currentTier 已更新为:', currentTier);
                 renderDashboard();
             });
         });
