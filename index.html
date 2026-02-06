@@ -1200,6 +1200,11 @@
                 }
             };
 
+            // 调试：打印曝光数据
+            const exposureData = dates.map(d => trend[d]?.['page_voice_design_exposure']?.users || 0);
+            console.log('renderTrend - 曝光数据 (前3天):', exposureData.slice(0, 3));
+            console.log('renderTrend - 曝光最大值:', Math.max(...exposureData));
+
             if (trendChart) {
                 trendChart.dispose();
             }
