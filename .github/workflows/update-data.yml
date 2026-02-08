@@ -26,9 +26,9 @@ jobs:
         run: pip install google-cloud-bigquery
 
       - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          mkdir -p ~/.config/gcloud
+          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > ~/.config/gcloud/application_default_credentials.json
 
       - name: Fetch latest data
         run: python fetch_data.py
