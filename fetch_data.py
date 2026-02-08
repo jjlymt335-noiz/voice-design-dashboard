@@ -279,12 +279,73 @@ def get_step_details():
                 GROUP BY e.event_name
                 """
 
+            # 保存行为（标签/描述修改）
+            if tier == '大盘':
+                query_save = f"""
+                WITH save_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_save_success'
+                ),
+                label_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_label_adjust'
+                ),
+                desc_users AS (
+                    SELECT DISTINCT user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                    WHERE {date_condition}
+                        AND event_name = 'voice_design_description_adjust'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM save_users) as total_save_users,
+                    (SELECT COUNT(*) FROM save_users s JOIN label_users l ON s.user_pseudo_id = l.user_pseudo_id) as with_label_adjust,
+                    (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust
+                """
+            else:
+                query_save = f"""
+                WITH {get_user_tier_cte()},
+                save_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'voice_design_save_success'
+                        AND ut.tier = '{tier}'
+                ),
+                label_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'voice_design_label_adjust'
+                        AND ut.tier = '{tier}'
+                ),
+                desc_users AS (
+                    SELECT DISTINCT e.user_pseudo_id
+                    FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+                    INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
+                    WHERE {date_condition}
+                        AND e.event_name = 'voice_design_description_adjust'
+                        AND ut.tier = '{tier}'
+                )
+                SELECT
+                    (SELECT COUNT(*) FROM save_users) as total_save_users,
+                    (SELECT COUNT(*) FROM save_users s JOIN label_users l ON s.user_pseudo_id = l.user_pseudo_id) as with_label_adjust,
+                    (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust
+                """
+
             prompt_data = run_query(query_prompt)
             entry_data = run_query(query_entry)
+            save_data = run_query(query_save)
 
             period_result[tier] = {
                 'prompt_adjustment': prompt_data[0] if prompt_data else {},
-                'entry_distribution': {row['event_name']: {'count': row['count'], 'users': row['users']} for row in entry_data}
+                'entry_distribution': {row['event_name']: {'count': row['count'], 'users': row['users']} for row in entry_data},
+                'save_adjustment': save_data[0] if save_data else {}
             }
 
         results[period_name] = period_result

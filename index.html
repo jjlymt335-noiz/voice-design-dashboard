@@ -600,6 +600,10 @@
                     <div id="generateDetails"></div>
                 </div>
                 <div class="detail-card">
+                    <div class="detail-title">Step 5 保存行为</div>
+                    <div id="saveDetails"></div>
+                </div>
+                <div class="detail-card">
                     <div class="detail-title">Step 6 离开去向</div>
                     <div id="exitDetails"></div>
                 </div>
@@ -873,6 +877,19 @@
                             <div>调整提示词权重: ${promptUsers.toLocaleString()} 人 (${totalGenerate ? ((generateWithPrompt/totalGenerate)*100).toFixed(1) : 0}%)</div>
                         </div>
                     `;
+                } else if (step.key === 'voice_design_save_success') {
+                    // 保存行为细分
+                    const stepDetails = getTieredData(dashboardData.step_details, currentPeriod, currentTier) || {};
+                    const saveDetails = stepDetails.save_adjustment || {};
+                    const totalSave = saveDetails.total_save_users || users;
+                    const labelAdjust = saveDetails.with_label_adjust || 0;
+                    const descAdjust = saveDetails.with_desc_adjust || 0;
+                    detailInfo = `
+                        <div class="step-detail-breakdown">
+                            <div>修改过标签: ${labelAdjust.toLocaleString()} 人 (${totalSave ? ((labelAdjust/totalSave)*100).toFixed(1) : 0}%)</div>
+                            <div>修改过描述: ${descAdjust.toLocaleString()} 人 (${totalSave ? ((descAdjust/totalSave)*100).toFixed(1) : 0}%)</div>
+                        </div>
+                    `;
                 } else if (step.key === 'exit') {
                     const toTTS = data['voice_design_save_voice_use'] || { count: 0, users: 0 };
                     const toLib = data['voice_design_complete_back'] || { count: 0, users: 0 };
@@ -990,6 +1007,21 @@
                 <div class="detail-row">
                     <span class="detail-label">生成用户中调整过 Prompt</span>
                     <span class="detail-value">${promptRate}%</span>
+                </div>
+            `;
+
+            // 保存行为
+            const save = details.save_adjustment || {};
+            const labelRate = save.total_save_users ? ((save.with_label_adjust / save.total_save_users) * 100).toFixed(1) : 0;
+            const descRate = save.total_save_users ? ((save.with_desc_adjust / save.total_save_users) * 100).toFixed(1) : 0;
+            document.getElementById('saveDetails').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">修改过标签的用户</span>
+                    <span class="detail-value">${save.with_label_adjust?.toLocaleString() || 0} 人 (${labelRate}%)</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">修改过描述的用户</span>
+                    <span class="detail-value">${save.with_desc_adjust?.toLocaleString() || 0} 人 (${descRate}%)</span>
                 </div>
             `;
 
