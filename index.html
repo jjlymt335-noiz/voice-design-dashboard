@@ -683,15 +683,17 @@
                         </div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-name">诊断：至少拥有1个design音色的用户占比</div>
+                        <div class="metric-name">诊断：至少拥有1个design音色的用户占比 <span style="font-size: 11px; color: #a0aec0;">（上线至今累计）</span></div>
                         <div class="metric-value-row">
-                            <span class="metric-main-value kpi-placeholder">待埋点支持</span>
+                            <span class="metric-main-value" id="designVoiceUsersPct">-</span>
+                            <span class="metric-sub-value" id="designVoiceUsersDetail"></span>
                         </div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-name">诊断：人均拥有的design音色数</div>
+                        <div class="metric-name">诊断：人均拥有的design音色数 <span style="font-size: 11px; color: #a0aec0;">（上线至今累计）</span></div>
                         <div class="metric-value-row">
-                            <span class="metric-main-value kpi-placeholder">待埋点支持</span>
+                            <span class="metric-main-value" id="avgDesignVoices">-</span>
+                            <span class="metric-sub-value" id="avgDesignVoicesDetail"></span>
                         </div>
                     </div>
                 </div>
@@ -1351,6 +1353,34 @@
 
             const paymentPct = payment.all_payment_users ? ((payment.design_to_payment / payment.all_payment_users) * 100).toFixed(1) : 0;
             document.getElementById('designPaymentPct').textContent = `${paymentPct}%`;
+
+            // Design 音色累计指标（独立于周期，从 design_voice 字段读取）
+            const dv = dashboardData.design_voice || {};
+            if (dv.design_voice_users_pct != null) {
+                const pctDelta = dv.pct_delta_7d || 0;
+                const pctDeltaStr = pctDelta >= 0 ? `+${pctDelta}pp` : `${pctDelta}pp`;
+                const pctDeltaColor = pctDelta >= 0 ? '#48bb78' : '#f56565';
+                document.getElementById('designVoiceUsersPct').innerHTML =
+                    `${dv.design_voice_users_pct}% <span style="font-size: 13px; color: ${pctDeltaColor}; margin-left: 6px;">${pctDeltaStr}</span>`;
+                document.getElementById('designVoiceUsersDetail').textContent =
+                    `${(dv.design_voice_users || 0).toLocaleString()} / ${(dv.total_users || 0).toLocaleString()} 人`;
+            } else {
+                document.getElementById('designVoiceUsersPct').textContent = '-';
+                document.getElementById('designVoiceUsersDetail').textContent = '';
+            }
+
+            if (dv.avg_design_voices != null) {
+                const avgDelta = dv.avg_delta_7d || 0;
+                const avgDeltaStr = avgDelta >= 0 ? `+${avgDelta}` : `${avgDelta}`;
+                const avgDeltaColor = avgDelta >= 0 ? '#48bb78' : '#f56565';
+                document.getElementById('avgDesignVoices').innerHTML =
+                    `${dv.avg_design_voices} <span style="font-size: 13px; color: ${avgDeltaColor}; margin-left: 6px;">${avgDeltaStr}</span>`;
+                document.getElementById('avgDesignVoicesDetail').textContent =
+                    `共 ${(dv.total_design_voices || 0).toLocaleString()} 个音色`;
+            } else {
+                document.getElementById('avgDesignVoices').textContent = '-';
+                document.getElementById('avgDesignVoicesDetail').textContent = '';
+            }
         }
 
         // 深层指标周期切换事件

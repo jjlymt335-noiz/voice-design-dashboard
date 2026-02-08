@@ -388,6 +388,101 @@ def get_upgrade_data():
 
     return results
 
+def _query_design_voice_snapshot(end_date_condition):
+    """查询截止某日的 design 音色累计指标快照
+
+    Args:
+        end_date_condition: SQL 条件，如 '_TABLE_SUFFIX < FORMAT_DATE(...)'
+    Returns:
+        dict with design_voice_users, total_users, pct, avg, total
+    """
+    query = f"""
+    WITH design_voices AS (
+        SELECT
+            user_pseudo_id,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'voice_id') as voice_id
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE {end_date_condition}
+            AND event_name = 'voice_design_save_success'
+    ),
+    user_voice_counts AS (
+        SELECT
+            user_pseudo_id,
+            COUNT(DISTINCT CASE WHEN voice_id IS NOT NULL THEN voice_id ELSE GENERATE_UUID() END) as voice_count
+        FROM design_voices
+        GROUP BY user_pseudo_id
+    ),
+    total_exposed AS (
+        SELECT COUNT(DISTINCT user_pseudo_id) as total
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE {end_date_condition}
+            AND event_name = 'page_voice_design_exposure'
+    )
+    SELECT
+        (SELECT COUNT(*) FROM user_voice_counts) as design_voice_users,
+        (SELECT total FROM total_exposed) as total_users,
+        (SELECT ROUND(AVG(voice_count), 2) FROM user_voice_counts) as avg_design_voices,
+        (SELECT CAST(SUM(voice_count) AS INT64) FROM user_voice_counts) as total_design_voices
+    """
+    rows = run_query(query)
+    if rows and rows[0]:
+        r = rows[0]
+        design_users = r.get('design_voice_users') or 0
+        total_users = r.get('total_users') or 0
+        return {
+            'design_voice_users': design_users,
+            'total_users': total_users,
+            'design_voice_users_pct': round(design_users / total_users * 100, 1) if total_users > 0 else 0,
+            'avg_design_voices': float(r.get('avg_design_voices') or 0),
+            'total_design_voices': r.get('total_design_voices') or 0,
+        }
+    return {
+        'design_voice_users': 0, 'total_users': 0,
+        'design_voice_users_pct': 0, 'avg_design_voices': 0,
+        'total_design_voices': 0,
+    }
+
+
+def get_design_voice_metrics():
+    """获取 design 音色拥有量指标（上线至今累计 + 相比7天前的变化）
+
+    从 voice_design_save_success 事件的 event_params 中提取 voice_id，
+    按用户维度统计：
+    1. 至少拥有1个 design 音色的用户占比（上线至今）
+    2. 人均拥有的 design 音色数（上线至今）
+    3. 与7天前的对比变化（+X pp / +X.XX）
+    """
+    # 当前累计（截止昨天，因为今天数据不完整）
+    current = _query_design_voice_snapshot(
+        '_TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())'
+    )
+
+    # 7天前累计（截止8天前 = 7天前的"昨天"）
+    prev_7d = _query_design_voice_snapshot(
+        '_TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))'
+    )
+
+    # 计算变化量
+    pct_delta = round(current['design_voice_users_pct'] - prev_7d['design_voice_users_pct'], 1)
+    avg_delta = round(current['avg_design_voices'] - prev_7d['avg_design_voices'], 2)
+
+    return {
+        # 当前绝对值
+        'design_voice_users': current['design_voice_users'],
+        'total_users': current['total_users'],
+        'design_voice_users_pct': current['design_voice_users_pct'],
+        'avg_design_voices': current['avg_design_voices'],
+        'total_design_voices': current['total_design_voices'],
+        # 7天前绝对值（供参考）
+        'prev_7d_design_voice_users': prev_7d['design_voice_users'],
+        'prev_7d_design_voice_users_pct': prev_7d['design_voice_users_pct'],
+        'prev_7d_avg_design_voices': prev_7d['avg_design_voices'],
+        # 变化量
+        'pct_delta_7d': pct_delta,     # 占比变化，单位 pp
+        'avg_delta_7d': avg_delta,     # 人均变化
+    }
+
+
 def get_deep_metrics():
     """获取第二层深层指标 - 按时间周期，支持分层"""
 
@@ -496,8 +591,6 @@ def get_deep_metrics():
                     'tts_from_design': tts_design[0]['tts_from_design'] if tts_design else 0,
                     'tts_total': tts_total[0]['total_tts'] if tts_total else 0,
                     'payment': payment[0] if payment else {},
-                    'design_voice_users': None,
-                    'avg_design_voices': None,
                     'design_tts_download_rate': None,
                     'total_tts_download_rate': None,
                 }
@@ -656,6 +749,9 @@ def main():
     print("  获取离开分布（含分层）...")
     exit_distribution = get_exit_distribution()
 
+    print("  获取 design 音色累计指标...")
+    design_voice = get_design_voice_metrics()
+
     data = {
         'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S') + ' (北京时间)',
         'user_tiers': user_tiers,
@@ -666,6 +762,7 @@ def main():
         'deep_metrics': deep_metrics,
         'trend': trend,
         'exit_distribution': exit_distribution,
+        'design_voice': design_voice,
     }
 
     # 保存为 JSON - 使用脚本所在目录

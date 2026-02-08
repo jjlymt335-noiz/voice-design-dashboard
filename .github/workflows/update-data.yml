@@ -1,0 +1,42 @@
+name: 每日更新看板数据
+
+on:
+  schedule:
+    # 每天北京时间 10:00 (UTC+8) = UTC 02:00
+    - cron: '0 2 * * *'
+  workflow_dispatch: # 支持手动触发
+
+permissions:
+  contents: write
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: pip install google-cloud-bigquery
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Fetch latest data
+        run: python fetch_data.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/dashboard_data.json
+          git diff --cached --quiet || git commit -m "chore: 自动更新看板数据 $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M')"
+          git push
