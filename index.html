@@ -1361,7 +1361,7 @@
                 const pctDeltaStr = pctDelta >= 0 ? `+${pctDelta}pp` : `${pctDelta}pp`;
                 const pctDeltaColor = pctDelta >= 0 ? '#48bb78' : '#f56565';
                 document.getElementById('designVoiceUsersPct').innerHTML =
-                    `${dv.design_voice_users_pct}% <span style="font-size: 13px; color: ${pctDeltaColor}; margin-left: 6px;">${pctDeltaStr}</span>`;
+                    `${dv.design_voice_users_pct}% <span style="font-size: 13px; color: ${pctDeltaColor}; margin-left: 6px;">较7天前 ${pctDeltaStr}</span>`;
                 document.getElementById('designVoiceUsersDetail').textContent =
                     `${(dv.design_voice_users || 0).toLocaleString()} / ${(dv.total_users || 0).toLocaleString()} 人`;
             } else {
@@ -1374,7 +1374,7 @@
                 const avgDeltaStr = avgDelta >= 0 ? `+${avgDelta}` : `${avgDelta}`;
                 const avgDeltaColor = avgDelta >= 0 ? '#48bb78' : '#f56565';
                 document.getElementById('avgDesignVoices').innerHTML =
-                    `${dv.avg_design_voices} <span style="font-size: 13px; color: ${avgDeltaColor}; margin-left: 6px;">${avgDeltaStr}</span>`;
+                    `${dv.avg_design_voices} <span style="font-size: 13px; color: ${avgDeltaColor}; margin-left: 6px;">较7天前 ${avgDeltaStr}</span>`;
                 document.getElementById('avgDesignVoicesDetail').textContent =
                     `共 ${(dv.total_design_voices || 0).toLocaleString()} 个音色`;
             } else {
