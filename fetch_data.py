@@ -453,9 +453,9 @@ def _query_design_voice_snapshot(end_date_condition):
     """查询截止某日的 design 音色累计指标快照
 
     Args:
-        end_date_condition: SQL 条件，如 '_TABLE_SUFFIX < FORMAT_DATE(...)'
+        end_date_condition: SQL 条件，如 '_TABLE_SUFFIX < FORMAT_DATE(...)'，用于统计累计拥有 design 音色的用户
     Returns:
-        dict with design_voice_users, total_users, pct, avg, total
+        dict with design_voice_users, total_users (最近14天有TTS生成的用户), pct, avg, total
     """
     query = f"""
     WITH design_voices AS (
@@ -473,15 +473,16 @@ def _query_design_voice_snapshot(end_date_condition):
         FROM design_voices
         GROUP BY user_pseudo_id
     ),
-    total_exposed AS (
+    total_tts_users AS (
         SELECT COUNT(DISTINCT user_pseudo_id) as total
         FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE {end_date_condition}
-            AND event_name = 'page_voice_design_exposure'
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name = 'tts_generate_click'
     )
     SELECT
         (SELECT COUNT(*) FROM user_voice_counts) as design_voice_users,
-        (SELECT total FROM total_exposed) as total_users,
+        (SELECT total FROM total_tts_users) as total_users,
         (SELECT ROUND(AVG(voice_count), 2) FROM user_voice_counts) as avg_design_voices,
         (SELECT CAST(SUM(voice_count) AS INT64) FROM user_voice_counts) as total_design_voices
     """
@@ -509,8 +510,8 @@ def get_design_voice_metrics():
 
     从 voice_design_save_success 事件的 event_params 中提取 voice_id，
     按用户维度统计：
-    1. 至少拥有1个 design 音色的用户占比（上线至今）
-    2. 人均拥有的 design 音色数（上线至今）
+    1. 至少拥有1个 design 音色的用户占比（分母：最近14天有TTS生成的用户）
+    2. 人均拥有的 design 音色数（上线至今累计）
     3. 与7天前的对比变化（+X pp / +X.XX）
     """
     # 当前累计（截止昨天，因为今天数据不完整）
