@@ -1,13 +1,12 @@
 # Dashboard 自动更新脚本
-$scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $scriptPath
+Set-Location "C:\Users\江嘉骝\voice-design-dashboard"
 
 Write-Host "=== Voice Design Dashboard Auto Update ==="
 Write-Host "Time: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
 # 1. 运行数据获取脚本
 Write-Host "`n[1/3] Fetching latest data..."
-python fetch_data.py
+& "C:\Users\江嘉骝\AppData\Local\Python\bin\python.exe" fetch_data.py
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: fetch_data.py failed with exit code $LASTEXITCODE" -ForegroundColor Red
     exit 1

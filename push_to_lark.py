@@ -210,6 +210,8 @@ def main():
     print("  Sending to Lark...")
     send_to_lark(card)
     print("Done!")
+    return 0
 
 if __name__ == "__main__":
-    main()
+    import sys
+    sys.exit(main())
