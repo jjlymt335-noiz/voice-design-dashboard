@@ -32,9 +32,14 @@ def main():
     msg = f"chore: auto-update dashboard data {datetime.now().strftime('%Y-%m-%d %H:%M')}"
     rc = run(f'git commit -m "{msg}"', check=False)
 
-    # 3. git pull rebase
+    # 3. git pull (用 merge --strategy ours 避免 dashboard_data.json 冲突)
     print("\n[3/4] Pulling...")
-    run("git pull --rebase origin master", check=False)
+    rc = run("git pull origin master --no-rebase -X ours", check=False)
+    if rc != 0:
+        # 如果还有冲突，强制用本地版本解决
+        run("git checkout --ours data/dashboard_data.json", check=False)
+        run("git add data/dashboard_data.json", check=False)
+        run("git commit --no-edit", check=False)
 
     # 4. git push
     print("\n[4/4] Pushing...")
