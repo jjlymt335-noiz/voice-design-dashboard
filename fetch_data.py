@@ -682,31 +682,55 @@ def get_trend_data():
 
     for tier in tiers:
         if tier == '大盘':
+            event_list = ','.join([f'"{e}"' for e in events])
             query = f"""
+            WITH combined AS (
+                SELECT user_pseudo_id, event_name, event_date
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+                    AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+                    AND event_name IN ({event_list})
+                UNION ALL
+                SELECT user_pseudo_id, event_name, event_date
+                FROM `noiz-430406.analytics_510746763.events_*`
+                WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+                    AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                    AND event_name IN ({event_list})
+            )
             SELECT
                 event_date,
                 event_name,
                 COUNT(*) as count,
                 COUNT(DISTINCT user_pseudo_id) as users
-            FROM `noiz-430406.analytics_510746763.events_intraday_*`
-            WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-                AND event_name IN ({','.join([f'"{e}"' for e in events])})
+            FROM combined
             GROUP BY event_date, event_name
             ORDER BY event_date
             """
         else:
+            event_list = ','.join([f'"{ev}"' for ev in events])
             query = f"""
-            WITH {get_user_tier_cte()}
+            WITH {get_user_tier_cte()},
+            combined AS (
+                SELECT user_pseudo_id, event_name, event_date
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+                    AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+                    AND event_name IN ({event_list})
+                UNION ALL
+                SELECT user_pseudo_id, event_name, event_date
+                FROM `noiz-430406.analytics_510746763.events_*`
+                WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+                    AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                    AND event_name IN ({event_list})
+            )
             SELECT
                 e.event_date,
                 e.event_name,
                 COUNT(*) as count,
                 COUNT(DISTINCT e.user_pseudo_id) as users
-            FROM `noiz-430406.analytics_510746763.events_intraday_*` e
+            FROM combined e
             INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
-            WHERE e._TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-                AND e.event_name IN ({','.join([f'"{ev}"' for ev in events])})
-                AND ut.tier = '{tier}'
+            WHERE ut.tier = '{tier}'
             GROUP BY e.event_date, e.event_name
             ORDER BY e.event_date
             """
