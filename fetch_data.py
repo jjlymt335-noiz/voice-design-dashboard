@@ -586,7 +586,7 @@ def get_tts_adoption_data():
             'design_voice_tts_10m': design_tts,
             'switch_tts_10m': switch_tts,
             'adoption_rate': round(saves_tts / total_saves * 100, 1) if total_saves > 0 else 0,
-            'design_usage_rate': round(saves_design / total_saves * 100, 1) if total_saves > 0 else 0,
+            'design_usage_rate': round(saves_design / saves_tts * 100, 1) if saves_tts > 0 else 0,
         }
     return {
         'total_save_events': 0, 'saves_with_any_tts': 0, 'saves_with_design_tts': 0,

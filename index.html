@@ -709,7 +709,7 @@
                         </div>
                     </div>
                     <div class="metric-item">
-                        <div class="metric-name">Design音色使用率（使用本次设计音色TTS的比例）</div>
+                        <div class="metric-name">Design音色使用率（有TTS的保存中，使用本次设计音色的比例）</div>
                         <div class="metric-value-row">
                             <span class="metric-main-value" id="ttsDesignUsageRate">-</span>
                             <span class="metric-sub-value" id="ttsDesignUsageDetail"></span>
@@ -1389,7 +1389,7 @@
 
                 document.getElementById('ttsDesignUsageRate').textContent = ttsAdopt.design_usage_rate + '%';
                 document.getElementById('ttsDesignUsageDetail').textContent =
-                    `${(ttsAdopt.saves_with_design_tts || 0).toLocaleString()} / ${ttsAdopt.total_save_events.toLocaleString()} 次保存`;
+                    `${(ttsAdopt.saves_with_design_tts || 0).toLocaleString()} / ${(ttsAdopt.saves_with_any_tts || 0).toLocaleString()} 次有TTS的保存`;
 
                 document.getElementById('ttsDesignVoiceCount').textContent =
                     `Design音色: ${(ttsAdopt.design_voice_tts_10m || 0).toLocaleString()} 次`;
