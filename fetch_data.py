@@ -505,6 +505,96 @@ def _query_design_voice_snapshot(end_date_condition):
     }
 
 
+def get_tts_adoption_data():
+    """获取 TTS 采纳率数据 - 保存 design 音色后 10 分钟内是否使用 TTS
+
+    使用 analysis_tmp.design 表 + tts_generate_click 事件
+    voice_id 从 2026-02-25 起可靠
+    """
+    query = """
+    WITH design_saves AS (
+        SELECT voice_id, user_id, create_ts
+        FROM `noiz-430406.analysis_tmp.design`
+        WHERE DATE(create_ts) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    ),
+    tts_events AS (
+        SELECT
+            user_id,
+            TIMESTAMP_MICROS(event_timestamp) as event_ts,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'voice_id') as voice_id
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+            AND event_name = 'tts_generate_click'
+            AND user_id IS NOT NULL
+        UNION ALL
+        SELECT
+            user_id,
+            TIMESTAMP_MICROS(event_timestamp) as event_ts,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'voice_id') as voice_id
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name = 'tts_generate_click'
+            AND user_id IS NOT NULL
+    ),
+    joined AS (
+        SELECT
+            d.voice_id as design_voice_id,
+            d.user_id,
+            d.create_ts,
+            t.voice_id as tts_voice_id,
+            t.event_ts,
+            CASE WHEN d.voice_id = t.voice_id THEN 1 ELSE 0 END as is_design_voice
+        FROM design_saves d
+        JOIN tts_events t ON CAST(d.user_id AS STRING) = t.user_id
+        WHERE t.event_ts BETWEEN d.create_ts AND TIMESTAMP_ADD(d.create_ts, INTERVAL 10 MINUTE)
+    ),
+    saves_with_tts AS (
+        SELECT DISTINCT design_voice_id, user_id, create_ts
+        FROM joined
+    ),
+    saves_with_design_tts AS (
+        SELECT DISTINCT design_voice_id, user_id, create_ts
+        FROM joined
+        WHERE is_design_voice = 1
+    )
+    SELECT
+        (SELECT COUNT(*) FROM design_saves) as total_save_events,
+        (SELECT COUNT(*) FROM saves_with_tts) as saves_with_any_tts,
+        (SELECT COUNT(*) FROM saves_with_design_tts) as saves_with_design_tts,
+        COUNT(*) as total_tts_10m,
+        SUM(is_design_voice) as design_voice_tts_10m,
+        SUM(1 - is_design_voice) as switch_tts_10m
+    FROM joined
+    """
+
+    rows = run_query(query)
+    if rows and rows[0]:
+        r = rows[0]
+        total_saves = r.get('total_save_events') or 0
+        saves_tts = r.get('saves_with_any_tts') or 0
+        saves_design = r.get('saves_with_design_tts') or 0
+        total_tts = r.get('total_tts_10m') or 0
+        design_tts = r.get('design_voice_tts_10m') or 0
+        switch_tts = r.get('switch_tts_10m') or 0
+        return {
+            'total_save_events': total_saves,
+            'saves_with_any_tts': saves_tts,
+            'saves_with_design_tts': saves_design,
+            'total_tts_10m': total_tts,
+            'design_voice_tts_10m': design_tts,
+            'switch_tts_10m': switch_tts,
+            'adoption_rate': round(saves_tts / total_saves * 100, 1) if total_saves > 0 else 0,
+            'design_usage_rate': round(saves_design / total_saves * 100, 1) if total_saves > 0 else 0,
+        }
+    return {
+        'total_save_events': 0, 'saves_with_any_tts': 0, 'saves_with_design_tts': 0,
+        'total_tts_10m': 0, 'design_voice_tts_10m': 0, 'switch_tts_10m': 0,
+        'adoption_rate': 0, 'design_usage_rate': 0,
+    }
+
+
 def get_design_voice_metrics():
     """获取 design 音色拥有量指标（上线至今累计 + 相比7天前的变化）
 
@@ -838,6 +928,9 @@ def main():
     print("  获取 design 音色累计指标...")
     design_voice = get_design_voice_metrics()
 
+    print("  获取 TTS 采纳率数据...")
+    tts_adoption = get_tts_adoption_data()
+
     data = {
         'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S') + ' (北京时间)',
         'user_tiers': user_tiers,
@@ -849,6 +942,7 @@ def main():
         'trend': trend,
         'exit_distribution': exit_distribution,
         'design_voice': design_voice,
+        'tts_adoption': tts_adoption,
     }
 
     # 保存为 JSON - 使用脚本所在目录

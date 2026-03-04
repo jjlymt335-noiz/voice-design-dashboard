@@ -699,6 +699,32 @@
                 </div>
                 <div class="metric-group">
                     <div class="metric-group-title">
+                        <span>TTS 采纳指标 <span style="font-size: 11px; color: #a0aec0;">（近7天，保存后10分钟窗口）</span></span>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">保存→TTS 采纳率（保存后10分钟内使用TTS的比例）</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="ttsAdoptionRate">-</span>
+                            <span class="metric-sub-value" id="ttsAdoptionDetail"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">Design音色使用率（使用本次设计音色TTS的比例）</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="ttsDesignUsageRate">-</span>
+                            <span class="metric-sub-value" id="ttsDesignUsageDetail"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">10分钟内TTS分布：Design音色 vs 切换其他音色</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="ttsDesignVoiceCount">-</span>
+                            <span class="metric-sub-value" id="ttsSwitchCount"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-group-title">
                         <span>护栏指标</span>
                     </div>
                     <div class="metric-item">
@@ -1353,6 +1379,27 @@
 
             const paymentPct = payment.all_payment_users ? ((payment.design_to_payment / payment.all_payment_users) * 100).toFixed(1) : 0;
             document.getElementById('designPaymentPct').textContent = `${paymentPct}%`;
+
+            // TTS 采纳率指标（近7天，独立于周期切换）
+            const ttsAdopt = dashboardData.tts_adoption || {};
+            if (ttsAdopt.total_save_events) {
+                document.getElementById('ttsAdoptionRate').textContent = ttsAdopt.adoption_rate + '%';
+                document.getElementById('ttsAdoptionDetail').textContent =
+                    `${(ttsAdopt.saves_with_any_tts || 0).toLocaleString()} / ${ttsAdopt.total_save_events.toLocaleString()} 次保存`;
+
+                document.getElementById('ttsDesignUsageRate').textContent = ttsAdopt.design_usage_rate + '%';
+                document.getElementById('ttsDesignUsageDetail').textContent =
+                    `${(ttsAdopt.saves_with_design_tts || 0).toLocaleString()} / ${ttsAdopt.total_save_events.toLocaleString()} 次保存`;
+
+                document.getElementById('ttsDesignVoiceCount').textContent =
+                    `Design音色: ${(ttsAdopt.design_voice_tts_10m || 0).toLocaleString()} 次`;
+                document.getElementById('ttsSwitchCount').textContent =
+                    `切换音色: ${(ttsAdopt.switch_tts_10m || 0).toLocaleString()} 次（共 ${(ttsAdopt.total_tts_10m || 0).toLocaleString()} 次TTS）`;
+            } else {
+                document.getElementById('ttsAdoptionRate').textContent = '-';
+                document.getElementById('ttsDesignUsageRate').textContent = '-';
+                document.getElementById('ttsDesignVoiceCount').textContent = '-';
+            }
 
             // Design 音色累计指标（独立于周期，从 design_voice 字段读取）
             const dv = dashboardData.design_voice || {};
