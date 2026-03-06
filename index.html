@@ -629,10 +629,6 @@
                     <div class="rating-display" id="ratingDisplay"></div>
                     <div id="ratingFooter" style="text-align: center; color: #718096; font-size: 11px; margin-top: 10px;"></div>
                 </div>
-                <div class="detail-card">
-                    <div class="detail-title">付费弹窗转化</div>
-                    <div id="upgradeDetails"></div>
-                </div>
             </div>
         </div>
 
@@ -748,6 +744,13 @@
                         <div class="metric-name">诊断：通过design入口进入付费页的比例</div>
                         <div class="metric-value-row">
                             <span class="metric-main-value" id="designPaymentPct">-</span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">点击 Upgrade</div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="upgradeClickCount">-</span>
+                            <span class="metric-sub-value" id="upgradeClickDetail"></span>
                         </div>
                     </div>
                 </div>
@@ -1298,42 +1301,13 @@
             }
         });
 
-        // 渲染付费弹窗
+        // 渲染点击Upgrade
         function renderUpgrade() {
-            // 支持分层数据
             const upgradeData = dashboardData.upgrade;
             const upgrade = upgradeData[currentTier] || upgradeData['大盘'] || upgradeData;
-            const popup = upgrade['voice_design_upgrade_popup'] || { count: 0, users: 0 };
             const confirm = upgrade['voice_design_upgrade_confirm_click'] || { count: 0, users: 0 };
-            const cancel = upgrade['voice_design_upgrade_cancel_click'] || { count: 0, users: 0 };
-
-            // 弹窗响应率 = (upgrade + cancel) / popup
-            const totalResponse = confirm.users + cancel.users;
-            const responseRate = popup.users ? ((totalResponse / popup.users) * 100).toFixed(1) : 0;
-            // 弹窗内升级率 = upgrade / (upgrade + cancel)
-            const upgradeRate = totalResponse ? ((confirm.users / totalResponse) * 100).toFixed(1) : 0;
-
-            document.getElementById('upgradeDetails').innerHTML = `
-                <div class="detail-row">
-                    <span class="detail-label">弹窗展示</span>
-                    <span class="detail-value">${popup.count.toLocaleString()} 次 / ${popup.users.toLocaleString()} 人</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">点击 Upgrade</span>
-                    <span class="detail-value">${confirm.count.toLocaleString()} 次 / ${confirm.users.toLocaleString()} 人</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">点击 Maybe Later</span>
-                    <span class="detail-value">${cancel.count.toLocaleString()} 次 / ${cancel.users.toLocaleString()} 人</span>
-                </div>
-                <div class="detail-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1);">
-                    <span class="detail-label">弹窗内选择率</span>
-                    <span class="detail-value">${upgradeRate}% 选择升级</span>
-                </div>
-                <div style="color: #f56565; font-size: 11px; margin-top: 10px; padding: 8px; background: rgba(245,101,101,0.1); border-radius: 4px;">
-                    ⚠️ 数据异常：Upgrade点击人数(${confirm.users})远大于弹窗展示人数(${popup.users})，可能upgrade埋点不止在此弹窗触发
-                </div>
-            `;
+            document.getElementById('upgradeClickCount').textContent = `${confirm.count.toLocaleString()} 次`;
+            document.getElementById('upgradeClickDetail').textContent = `${confirm.users.toLocaleString()} 人`;
         }
 
         let trendViewMode = 'absolute'; // 'absolute' or 'percentage'
