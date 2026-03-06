@@ -760,36 +760,38 @@ def get_non_gen_flow_data():
         'step1': []
     }
 
-    step1_top3 = step1_counts.most_common(3)
-    step1_others = total_with_steps - sum(c for _, c in step1_top3)
+    # 第1步：只保留 top1（离开Design页），其余合并为"其他"且不可展开
+    step1_top1 = step1_counts.most_common(1)
+    s1_name, s1_count = step1_top1[0]
+    s1_others_count = total_with_steps - s1_count
 
-    for s1_name, s1_count in step1_top3:
-        s1_total_for_s2 = sum(step1_step2[s1_name].values())
-        s1_node = {
-            'name': get_label(s1_name), 'event': s1_name,
-            'count': s1_count, 'pct': round(s1_count / total_with_steps * 100, 1),
-            'step2': []
-        }
-        if s1_total_for_s2 > 0:
-            s2_top3 = step1_step2[s1_name].most_common(3)
-            s2_others = s1_total_for_s2 - sum(c for _, c in s2_top3)
-            for s2_name, s2_count in s2_top3:
-                s2_total_for_s3 = sum(step1_step2_step3[s1_name][s2_name].values())
-                s2_node = {
-                    'name': get_label(s2_name), 'event': s2_name,
-                    'count': s2_count, 'pct': round(s2_count / s1_total_for_s2 * 100, 1),
-                    'step3': build_top3(step1_step2_step3[s1_name][s2_name], s2_total_for_s3) if s2_total_for_s3 else []
-                }
-                s1_node['step2'].append(s2_node)
-            if s2_others > 0:
-                s1_node['step2'].append({'name': '其他', 'event': 'others',
-                                         'count': s2_others, 'pct': round(s2_others / s1_total_for_s2 * 100, 1),
-                                         'step3': []})
-        flow_tree['step1'].append(s1_node)
+    # 构建 top1 的 step2/step3
+    s1_total_for_s2 = sum(step1_step2[s1_name].values())
+    s1_node = {
+        'name': get_label(s1_name), 'event': s1_name,
+        'count': s1_count, 'pct': round(s1_count / total_with_steps * 100, 1),
+        'step2': []
+    }
+    if s1_total_for_s2 > 0:
+        s2_top3 = step1_step2[s1_name].most_common(3)
+        s2_others = s1_total_for_s2 - sum(c for _, c in s2_top3)
+        for s2_name, s2_count in s2_top3:
+            s2_total_for_s3 = sum(step1_step2_step3[s1_name][s2_name].values())
+            s2_node = {
+                'name': get_label(s2_name), 'event': s2_name,
+                'count': s2_count, 'pct': round(s2_count / s1_total_for_s2 * 100, 1),
+                'step3': build_top3(step1_step2_step3[s1_name][s2_name], s2_total_for_s3) if s2_total_for_s3 else []
+            }
+            s1_node['step2'].append(s2_node)
+        if s2_others > 0:
+            s1_node['step2'].append({'name': '其他', 'event': 'others',
+                                     'count': s2_others, 'pct': round(s2_others / s1_total_for_s2 * 100, 1),
+                                     'step3': []})
+    flow_tree['step1'].append(s1_node)
 
-    if step1_others > 0:
+    if s1_others_count > 0:
         flow_tree['step1'].append({'name': '其他', 'event': 'others',
-                                   'count': step1_others, 'pct': round(step1_others / total_with_steps * 100, 1),
+                                   'count': s1_others_count, 'pct': round(s1_others_count / total_with_steps * 100, 1),
                                    'step2': []})
     return flow_tree
 
