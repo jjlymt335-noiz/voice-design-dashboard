@@ -733,24 +733,22 @@
                             <span class="metric-main-value kpi-placeholder">待埋点支持</span>
                         </div>
                     </div>
-                    <div class="metric-item">
-                        <div class="metric-name">入口付费：Design入口 → 付费用户</div>
-                        <div class="metric-value-row">
-                            <span class="metric-main-value" id="designPayment">-</span>
-                            <span class="metric-sub-value" id="designPaymentDetail"></span>
-                        </div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-name">诊断：通过design入口进入付费页的比例</div>
-                        <div class="metric-value-row">
-                            <span class="metric-main-value" id="designPaymentPct">-</span>
-                        </div>
+                </div>
+                <div class="metric-group">
+                    <div class="metric-group-title">
+                        <span>付费指标</span>
                     </div>
                     <div class="metric-item">
                         <div class="metric-name">点击 Upgrade</div>
                         <div class="metric-value-row">
                             <span class="metric-main-value" id="upgradeClickCount">-</span>
                             <span class="metric-sub-value" id="upgradeClickDetail"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-name">诊断：通过design入口进入付费页的比例 <span style="font-size: 11px; color: #a0aec0;">（点击Upgrade且付费用户 / 全站付费用户）</span></div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="designPaymentPct">-</span>
                         </div>
                     </div>
                 </div>
@@ -1490,11 +1488,8 @@
             document.getElementById('ttsFromDesign').textContent = (baseMetrics.tts_from_design || 0).toLocaleString();
             document.getElementById('ttsFromDesignPct').textContent = `占总 TTS 的 ${ttsRate}%`;
 
-            // 付费（使用大盘数据）
+            // 付费指标
             const payment = baseMetrics.payment || {};
-            document.getElementById('designPayment').textContent = payment.design_to_payment || 0;
-            document.getElementById('designPaymentDetail').textContent = `点击升级 ${payment.design_upgrade_users || 0} 人`;
-
             const paymentPct = payment.all_payment_users ? ((payment.design_to_payment / payment.all_payment_users) * 100).toFixed(1) : 0;
             document.getElementById('designPaymentPct').textContent = `${paymentPct}%`;
 
