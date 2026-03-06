@@ -181,6 +181,7 @@
         .funnel-container {
             display: flex;
             gap: 30px;
+            overflow: hidden;
         }
 
         .funnel-chart {
@@ -190,6 +191,9 @@
 
         .funnel-details {
             width: 400px;
+            flex-shrink: 0;
+            max-height: 600px;
+            overflow-y: auto;
         }
 
         .funnel-step {
