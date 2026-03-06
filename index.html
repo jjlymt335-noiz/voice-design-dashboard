@@ -835,9 +835,13 @@
             }
 
             // 恢复漏斗图显示（从 Sankey 切回）
-            document.getElementById('funnelChart').style.display = '';
-            document.getElementById('funnelChart').style.height = '400px';
-            document.getElementById('funnelDetails').style.display = '';
+            const funnelChart = document.getElementById('funnelChart');
+            const funnelDetails = document.getElementById('funnelDetails');
+            funnelChart.style.display = '';
+            funnelChart.style.height = '400px';
+            funnelChart.style.width = '';
+            funnelDetails.style.display = '';
+            document.querySelector('.funnel-container').style.display = 'flex';
             const summaryEl = document.getElementById('nonGenFlowSummary');
             if (summaryEl) summaryEl.remove();
 
@@ -1019,55 +1023,60 @@
                 return;
             }
 
-            // 用整个 funnel-container 区域
+            // 隐藏详情面板，Sankey 撑满整个 funnel-container
             document.getElementById('funnelDetails').style.display = 'none';
+            const container = document.querySelector('.funnel-container');
+            container.style.display = 'block';  // 改为 block 让 chart 撑满
+
             const chartDom = document.getElementById('funnelChart');
             chartDom.style.display = '';
-            chartDom.style.height = '520px';
+            chartDom.style.flex = '';
+            chartDom.style.width = '100%';
+            chartDom.style.height = '450px';
 
-            // 摘要
+            // 摘要文字放到 funnel-container 上方
             let summaryEl = document.getElementById('nonGenFlowSummary');
             if (!summaryEl) {
                 summaryEl = document.createElement('div');
                 summaryEl.id = 'nonGenFlowSummary';
-                summaryEl.style.cssText = 'color:#5f6368;font-size:13px;margin-bottom:12px;line-height:1.6;';
-                chartDom.parentElement.insertBefore(summaryEl, chartDom);
+                summaryEl.style.cssText = 'color:#5f6368;font-size:13px;margin-bottom:8px;line-height:1.6;';
+                container.parentElement.insertBefore(summaryEl, container);
             }
             summaryEl.innerHTML = `近14天曝光 <strong>${flow.total_exposed.toLocaleString()}</strong> 人，
                 已生成 ${flow.total_generated.toLocaleString()} 人（${(flow.total_generated/flow.total_exposed*100).toFixed(1)}%），
                 <strong style="color:#ea4335;">未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>，
                 其中 ${flow.non_gen_with_events.toLocaleString()} 人有后续行为`;
 
-            // 构建 Sankey 数据 - 节点名用 "S1_名称" 格式确保唯一
+            // 构建 Sankey - 只用 top3+其他（数据已经是这个结构）
             const nodes = [];
             const links = [];
-            const nodeNames = {};  // 内部key -> 显示名
-
-            function addNode(key, label, color) {
-                nodes.push({ name: key, itemStyle: { color, borderColor: color } });
-                nodeNames[key] = label;
-            }
-
+            const nodeMeta = {};  // key -> {label, count, parentTotal}
             const C = ['#4285f4', '#ea4335', '#fbbc04', '#34a853', '#a0aec0'];
+            const totalS1 = flow.non_gen_with_events;
 
             flow.step1.forEach((s1, i) => {
                 const s1Key = 'S1_' + i;
-                addNode(s1Key, s1.name, C[Math.min(i, 4)]);
+                nodes.push({ name: s1Key, itemStyle: { color: C[Math.min(i, 4)], borderColor: C[Math.min(i, 4)] } });
+                nodeMeta[s1Key] = { label: s1.name, count: s1.count, pct: s1.pct, parentTotal: totalS1 };
 
+                const s2Total = (s1.step2 || []).reduce((s, x) => s + x.count, 0);
                 (s1.step2 || []).forEach((s2, j) => {
                     const s2Key = 'S2_' + i + '_' + j;
-                    addNode(s2Key, s2.name, C[Math.min(j, 4)]);
+                    nodes.push({ name: s2Key, itemStyle: { color: C[Math.min(j, 4)], borderColor: C[Math.min(j, 4)] } });
+                    nodeMeta[s2Key] = { label: s2.name, count: s2.count, pct: s2.pct, parentTotal: s2Total };
                     links.push({ source: s1Key, target: s2Key, value: s2.count });
 
+                    const s3Total = (s2.step3 || []).reduce((s, x) => s + x.count, 0);
                     (s2.step3 || []).forEach((s3, k) => {
                         const s3Key = 'S3_' + i + '_' + j + '_' + k;
-                        addNode(s3Key, s3.name, C[Math.min(k, 4)]);
+                        nodes.push({ name: s3Key, itemStyle: { color: C[Math.min(k, 4)], borderColor: C[Math.min(k, 4)] } });
+                        nodeMeta[s3Key] = { label: s3.name, count: s3.count, pct: s3.pct, parentTotal: s3Total };
                         links.push({ source: s2Key, target: s3Key, value: s3.count });
                     });
                 });
             });
 
-            // 先销毁旧实例
+            // 销毁旧实例
             const existingChart = echarts.getInstanceByDom(chartDom);
             if (existingChart) existingChart.dispose();
 
@@ -1078,22 +1087,23 @@
                     triggerOn: 'mousemove',
                     formatter: function(params) {
                         if (params.dataType === 'node') {
-                            const label = nodeNames[params.name] || params.name;
-                            return '<strong>' + label + '</strong><br/>' + params.value.toLocaleString() + ' 人';
+                            const m = nodeMeta[params.name];
+                            return '<strong>' + m.label + '</strong><br/>' +
+                                m.count.toLocaleString() + ' 人（' + m.pct + '%）';
                         }
-                        const src = nodeNames[params.data.source] || params.data.source;
-                        const tgt = nodeNames[params.data.target] || params.data.target;
+                        const src = nodeMeta[params.data.source]?.label || params.data.source;
+                        const tgt = nodeMeta[params.data.target]?.label || params.data.target;
                         return src + ' → ' + tgt + '<br/>' + params.data.value.toLocaleString() + ' 人';
                     }
                 },
                 series: [{
                     type: 'sankey',
-                    left: 40,
-                    right: 160,
-                    top: 20,
-                    bottom: 20,
-                    nodeWidth: 24,
-                    nodeGap: 12,
+                    left: 10,
+                    right: 220,
+                    top: 10,
+                    bottom: 10,
+                    nodeWidth: 20,
+                    nodeGap: 10,
                     draggable: true,
                     orient: 'horizontal',
                     layoutIterations: 32,
@@ -1104,14 +1114,15 @@
                         fontSize: 12,
                         color: '#333',
                         formatter: function(params) {
-                            const label = nodeNames[params.name] || params.name;
-                            return label + '\n' + params.value.toLocaleString();
+                            const m = nodeMeta[params.name];
+                            if (!m) return '';
+                            return m.label + '\n' + m.count.toLocaleString() + '（' + m.pct + '%）';
                         }
                     },
                     lineStyle: {
                         color: 'gradient',
                         curveness: 0.5,
-                        opacity: 0.25
+                        opacity: 0.2
                     },
                     data: nodes,
                     links: links
