@@ -463,7 +463,20 @@ def get_credit_data():
     def query_credits(start_interval, end_interval):
         """查询指定时间范围的 credit 数据"""
         query = f"""
-        WITH base AS (
+        WITH all_events AS (
+            SELECT event_params
+            FROM `noiz-430406.analytics_510746763.events_*`
+            WHERE event_name = 'credit_reduce'
+                AND _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {start_interval} DAY))
+                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {end_interval} DAY))
+            UNION ALL
+            SELECT event_params
+            FROM `noiz-430406.analytics_510746763.events_intraday_*`
+            WHERE event_name = 'credit_reduce'
+                AND _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {start_interval} DAY))
+                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {end_interval} DAY))
+        ),
+        base AS (
             SELECT
                 (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'type') AS ep_type,
                 COALESCE(
@@ -471,10 +484,7 @@ def get_credit_data():
                     (SELECT value.double_value FROM UNNEST(event_params) WHERE key = 'credits'),
                     (SELECT SAFE_CAST(value.string_value AS FLOAT64) FROM UNNEST(event_params) WHERE key = 'credits')
                 ) AS credits
-            FROM `noiz-430406.analytics_510746763.events_*`
-            WHERE event_name = 'credit_reduce'
-                AND _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {start_interval} DAY))
-                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {end_interval} DAY))
+            FROM all_events
         )
         SELECT
             COALESCE(SUM(IF(ep_type = 'voice_design', credits, 0)), 0) AS voice_design_credits,
