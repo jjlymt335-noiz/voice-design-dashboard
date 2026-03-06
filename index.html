@@ -587,6 +587,13 @@
             </div>
         </div>
 
+        <!-- 未生成用户行为流 -->
+        <div class="section">
+            <div class="section-title">未生成用户行为流 <span style="font-size: 12px; color: #718096; font-weight: normal;">（近14天，曝光后30分钟内前3步）</span></div>
+            <div id="nonGenFlowSummary" style="color: #718096; font-size: 12px; margin-bottom: 12px;"></div>
+            <div id="nonGenFlowChart" style="width: 100%;"></div>
+        </div>
+
         <!-- 细分数据 -->
         <div class="section">
             <div class="section-title">步骤细分</div>
@@ -806,6 +813,7 @@
         // 渲染看板
         function renderDashboard() {
             renderFunnel();
+            renderNonGenFlow();
             renderStepDetails();
             renderRating();
             renderUpgrade();
@@ -995,6 +1003,140 @@
                     color: ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#43e97b']
                 }]
             });
+        }
+
+        // 渲染未生成用户行为流
+        function renderNonGenFlow() {
+            const flow = dashboardData.non_gen_flow;
+            if (!flow || !flow.step1) {
+                document.getElementById('nonGenFlowChart').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:40px;">暂无数据</div>';
+                return;
+            }
+
+            // Summary
+            document.getElementById('nonGenFlowSummary').innerHTML =
+                `总曝光 ${flow.total_exposed.toLocaleString()} 人，已生成 ${flow.total_generated.toLocaleString()} 人（${(flow.total_generated/flow.total_exposed*100).toFixed(1)}%），` +
+                `<strong>未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>，其中 ${flow.non_gen_with_events.toLocaleString()} 人有后续行为`;
+
+            // 颜色
+            const COLORS = {
+                step1: ['#667eea', '#764ba2', '#f5576c', '#a0aec0'],
+                step2: ['#4facfe', '#43e97b', '#fa709a', '#a0aec0'],
+                step3: ['#38f9d7', '#fccb90', '#a18cd1', '#a0aec0']
+            };
+
+            // 构建 HTML 流程图
+            let html = '<div style="overflow-x:auto;">';
+            html += '<div style="display:flex;gap:0;min-width:900px;align-items:flex-start;">';
+
+            // Step 1 列
+            html += '<div style="flex:1;min-width:200px;">';
+            html += '<div style="text-align:center;font-weight:600;color:#4a5568;margin-bottom:8px;font-size:13px;">第1步</div>';
+            flow.step1.forEach((s1, i) => {
+                const color = COLORS.step1[Math.min(i, 3)];
+                html += `<div class="flow-node" style="border-left:4px solid ${color};background:#f7fafc;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;" data-s1="${i}">
+                    <div style="font-weight:600;font-size:13px;color:#2d3748;">${s1.name}</div>
+                    <div style="font-size:12px;color:#718096;">${s1.count.toLocaleString()} 人 (${s1.pct}%)</div>
+                </div>`;
+            });
+            html += '</div>';
+
+            // 箭头列
+            html += '<div style="display:flex;align-items:center;padding:0 4px;color:#cbd5e0;font-size:20px;margin-top:30px;">→</div>';
+
+            // Step 2 列
+            html += '<div style="flex:1.2;min-width:220px;">';
+            html += '<div style="text-align:center;font-weight:600;color:#4a5568;margin-bottom:8px;font-size:13px;">第2步</div>';
+            html += '<div id="flowStep2Content">';
+            // 默认显示第一个 step1 的 step2
+            html += renderFlowStep2(flow.step1[0], COLORS);
+            html += '</div></div>';
+
+            // 箭头列
+            html += '<div style="display:flex;align-items:center;padding:0 4px;color:#cbd5e0;font-size:20px;margin-top:30px;">→</div>';
+
+            // Step 3 列
+            html += '<div style="flex:1.2;min-width:220px;">';
+            html += '<div style="text-align:center;font-weight:600;color:#4a5568;margin-bottom:8px;font-size:13px;">第3步</div>';
+            html += '<div id="flowStep3Content">';
+            // 默认显示第一个step1的第一个step2的step3
+            if (flow.step1[0]?.step2?.[0]?.step3) {
+                html += renderFlowStep3(flow.step1[0].step2[0], COLORS);
+            }
+            html += '</div></div>';
+
+            html += '</div></div>';
+
+            document.getElementById('nonGenFlowChart').innerHTML = html;
+
+            // 点击 step1 节点切换 step2
+            document.querySelectorAll('.flow-node[data-s1]').forEach(node => {
+                node.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.s1);
+                    const s1 = flow.step1[idx];
+                    document.querySelectorAll('.flow-node[data-s1]').forEach(n => n.style.background = '#f7fafc');
+                    this.style.background = '#edf2f7';
+                    document.getElementById('flowStep2Content').innerHTML = renderFlowStep2(s1, COLORS);
+                    // 默认选中第一个 step2
+                    if (s1.step2?.[0]?.step3) {
+                        document.getElementById('flowStep3Content').innerHTML = renderFlowStep3(s1.step2[0], COLORS);
+                    } else {
+                        document.getElementById('flowStep3Content').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
+                    }
+                    // 绑定 step2 点击
+                    bindStep2Clicks(s1, COLORS);
+                });
+            });
+            // 初始绑定
+            bindStep2Clicks(flow.step1[0], COLORS);
+            // 高亮第一个step1
+            const firstS1 = document.querySelector('.flow-node[data-s1="0"]');
+            if (firstS1) firstS1.style.background = '#edf2f7';
+        }
+
+        function bindStep2Clicks(s1Data, COLORS) {
+            document.querySelectorAll('.flow-node[data-s2]').forEach(node => {
+                node.addEventListener('click', function() {
+                    const idx = parseInt(this.dataset.s2);
+                    const s2 = s1Data.step2[idx];
+                    document.querySelectorAll('.flow-node[data-s2]').forEach(n => n.style.background = '#f7fafc');
+                    this.style.background = '#edf2f7';
+                    if (s2?.step3?.length) {
+                        document.getElementById('flowStep3Content').innerHTML = renderFlowStep3(s2, COLORS);
+                    } else {
+                        document.getElementById('flowStep3Content').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
+                    }
+                });
+            });
+            // 高亮第一个step2
+            const firstS2 = document.querySelector('.flow-node[data-s2="0"]');
+            if (firstS2) firstS2.style.background = '#edf2f7';
+        }
+
+        function renderFlowStep2(s1, COLORS) {
+            if (!s1?.step2?.length) return '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
+            let html = `<div style="font-size:11px;color:#a0aec0;text-align:center;margin-bottom:4px;">来自: ${s1.name}</div>`;
+            s1.step2.forEach((s2, i) => {
+                const color = COLORS.step2[Math.min(i, 3)];
+                html += `<div class="flow-node" style="border-left:4px solid ${color};background:#f7fafc;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;" data-s2="${i}">
+                    <div style="font-weight:600;font-size:13px;color:#2d3748;">${s2.name}</div>
+                    <div style="font-size:12px;color:#718096;">${s2.count.toLocaleString()} 人 (${s2.pct}%)</div>
+                </div>`;
+            });
+            return html;
+        }
+
+        function renderFlowStep3(s2, COLORS) {
+            if (!s2?.step3?.length) return '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
+            let html = `<div style="font-size:11px;color:#a0aec0;text-align:center;margin-bottom:4px;">来自: ${s2.name}</div>`;
+            s2.step3.forEach((s3, i) => {
+                const color = COLORS.step3[Math.min(i, 3)];
+                html += `<div style="border-left:4px solid ${color};background:#f7fafc;border-radius:8px;padding:10px 12px;margin-bottom:6px;">
+                    <div style="font-weight:600;font-size:13px;color:#2d3748;">${s3.name}</div>
+                    <div style="font-size:12px;color:#718096;">${s3.count.toLocaleString()} 人 (${s3.pct}%)</div>
+                </div>`;
+            });
+            return html;
         }
 
         // 渲染步骤细分

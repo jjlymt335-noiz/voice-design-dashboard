@@ -595,6 +595,204 @@ def get_tts_adoption_data():
     }
 
 
+def get_non_gen_flow_data():
+    """获取未生成用户的行为流数据（近14天，前3步，top3+其他）"""
+    from collections import Counter, defaultdict
+
+    EVENT_LABELS = {
+        'page_voice_design_bounce': '离开Design页',
+        'voice_design_prompt_click': '点击Prompt',
+        'voice_design_upgrade_confirm_click': '点击Upgrade',
+        'signup_success': '注册成功',
+        'signup_click': '点击注册',
+        'google_login_click': '谷歌登录',
+        'login_success': '登录成功',
+        'page_tts_creation_exposure': '进入TTS创作页',
+        'page_tts_creation_bounce': '离开TTS创作页',
+        'page_voice_clone_exposure': '进入Voice Clone页',
+        'page_voice_clone_bounce': '离开Voice Clone页',
+        'page_voice_lib_exposure': '进入音色库',
+        'page_voice_lib_bounce': '离开音色库',
+        'page_voice_sound_exposure': '进入Sound Design页',
+        'page_voice_sound_bounce': '离开Sound Design页',
+        'page_landing_exposure': '进入Landing页',
+        'page_landing_bounce': '离开Landing页',
+        'page_explore_exposure': '进入探索页',
+        'guide_exposure': '引导曝光',
+        'guide_click': '点击引导',
+        'guide_dismiss': '关闭引导',
+        'voice_search_result_exposure': '搜索结果曝光',
+        'voice_clone_add_voice_click': '添加克隆音色',
+        'voice_play_click': '播放音色',
+        'tts_generate_click': 'TTS生成',
+        'tts_inputdetail': 'TTS输入内容',
+        'tts_playback_click': 'TTS播放',
+        'creation_voice_card_click': '点击音色卡片',
+        'creation_voice_clone_click': '点击Voice Clone',
+        'creation_voice_design_click': '点击Voice Design',
+        'voice_library_voice_design_click': '从音色库进Design',
+        'credit_reduce': 'Credits消耗',
+        'page_video_videoList_exposure': '进入视频列表',
+        'NEX-page_voice_design_bounce': '离开Design页(NEX)',
+        'NEX-page_tts_creation_exposure': '进入TTS创作页(NEX)',
+        'voice_clone_preview_listen_play_click': '试听克隆音色',
+    }
+    def get_label(e):
+        return EVENT_LABELS.get(e, e)
+
+    query = """
+    WITH all_events AS (
+        SELECT user_pseudo_id, event_name, event_timestamp
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+          AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+        UNION ALL
+        SELECT user_pseudo_id, event_name, event_timestamp
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+          AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+    ),
+    design_exposures AS (
+        SELECT user_pseudo_id, MIN(event_timestamp) as exposure_ts
+        FROM all_events WHERE event_name = 'page_voice_design_exposure'
+        GROUP BY user_pseudo_id
+    ),
+    generators AS (
+        SELECT DISTINCT user_pseudo_id FROM all_events
+        WHERE event_name = 'voice_design_generate_click'
+    ),
+    non_gen_exposures AS (
+        SELECT de.user_pseudo_id, de.exposure_ts
+        FROM design_exposures de
+        LEFT JOIN generators g ON de.user_pseudo_id = g.user_pseudo_id
+        WHERE g.user_pseudo_id IS NULL
+    ),
+    post_events AS (
+        SELECT e.user_pseudo_id, e.event_name,
+            ROW_NUMBER() OVER (PARTITION BY e.user_pseudo_id ORDER BY e.event_timestamp) as step_num
+        FROM all_events e
+        JOIN non_gen_exposures ng ON e.user_pseudo_id = ng.user_pseudo_id
+        WHERE e.event_timestamp > ng.exposure_ts
+          AND e.event_timestamp <= ng.exposure_ts + 1800000000
+          AND e.event_name NOT IN (
+              'page_voice_design_exposure',
+              'session_start', 'first_visit', 'first_open',
+              'user_engagement', 'scroll', 'page_view',
+              'click', 'file_download', 'view_search_results'
+          )
+    ),
+    user_paths AS (
+        SELECT user_pseudo_id,
+            MAX(CASE WHEN step_num = 1 THEN event_name END) as step1,
+            MAX(CASE WHEN step_num = 2 THEN event_name END) as step2,
+            MAX(CASE WHEN step_num = 3 THEN event_name END) as step3
+        FROM post_events WHERE step_num <= 3
+        GROUP BY user_pseudo_id
+    )
+    SELECT step1, step2, step3, COUNT(*) as user_count
+    FROM user_paths WHERE step1 IS NOT NULL
+    GROUP BY step1, step2, step3
+    ORDER BY user_count DESC
+    """
+    rows = run_query(query)
+    if not rows:
+        return {}
+
+    # 同时查总数
+    total_query = """
+    WITH all_events AS (
+        SELECT user_pseudo_id, event_name
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+          AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+          AND event_name IN ('page_voice_design_exposure', 'voice_design_generate_click')
+        UNION ALL
+        SELECT user_pseudo_id, event_name
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+          AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+          AND event_name IN ('page_voice_design_exposure', 'voice_design_generate_click')
+    )
+    SELECT
+        COUNT(DISTINCT CASE WHEN event_name = 'page_voice_design_exposure' THEN user_pseudo_id END) as total_exposed,
+        COUNT(DISTINCT CASE WHEN event_name = 'voice_design_generate_click' THEN user_pseudo_id END) as total_generated
+    FROM all_events
+    """
+    totals = run_query(total_query)
+    t = totals[0] if totals else {}
+    total_exposed = t.get('total_exposed', 0)
+    total_generated = t.get('total_generated', 0)
+    non_gen_total = total_exposed - total_generated
+
+    # 构建树
+    step1_counts = Counter()
+    step1_step2 = defaultdict(Counter)
+    step1_step2_step3 = defaultdict(lambda: defaultdict(Counter))
+
+    for r in rows:
+        s1, s2, s3, cnt = r['step1'], r['step2'], r['step3'], r['user_count']
+        step1_counts[s1] += cnt
+        if s2:
+            step1_step2[s1][s2] += cnt
+            if s3:
+                step1_step2_step3[s1][s2][s3] += cnt
+
+    total_with_steps = sum(step1_counts.values())
+
+    def build_top3(counter, total):
+        top3 = counter.most_common(3)
+        others_count = total - sum(c for _, c in top3)
+        result = []
+        for name, count in top3:
+            result.append({'name': get_label(name), 'event': name,
+                           'count': count, 'pct': round(count / total * 100, 1)})
+        if others_count > 0:
+            result.append({'name': '其他', 'event': 'others',
+                           'count': others_count, 'pct': round(others_count / total * 100, 1)})
+        return result
+
+    flow_tree = {
+        'total_exposed': total_exposed,
+        'total_generated': total_generated,
+        'non_gen_total': non_gen_total,
+        'non_gen_with_events': total_with_steps,
+        'step1': []
+    }
+
+    step1_top3 = step1_counts.most_common(3)
+    step1_others = total_with_steps - sum(c for _, c in step1_top3)
+
+    for s1_name, s1_count in step1_top3:
+        s1_total_for_s2 = sum(step1_step2[s1_name].values())
+        s1_node = {
+            'name': get_label(s1_name), 'event': s1_name,
+            'count': s1_count, 'pct': round(s1_count / total_with_steps * 100, 1),
+            'step2': []
+        }
+        if s1_total_for_s2 > 0:
+            s2_top3 = step1_step2[s1_name].most_common(3)
+            s2_others = s1_total_for_s2 - sum(c for _, c in s2_top3)
+            for s2_name, s2_count in s2_top3:
+                s2_total_for_s3 = sum(step1_step2_step3[s1_name][s2_name].values())
+                s2_node = {
+                    'name': get_label(s2_name), 'event': s2_name,
+                    'count': s2_count, 'pct': round(s2_count / s1_total_for_s2 * 100, 1),
+                    'step3': build_top3(step1_step2_step3[s1_name][s2_name], s2_total_for_s3) if s2_total_for_s3 else []
+                }
+                s1_node['step2'].append(s2_node)
+            if s2_others > 0:
+                s1_node['step2'].append({'name': '其他', 'event': 'others',
+                                         'count': s2_others, 'pct': round(s2_others / s1_total_for_s2 * 100, 1),
+                                         'step3': []})
+        flow_tree['step1'].append(s1_node)
+
+    if step1_others > 0:
+        flow_tree['step1'].append({'name': '其他', 'event': 'others',
+                                   'count': step1_others, 'pct': round(step1_others / total_with_steps * 100, 1),
+                                   'step2': []})
+    return flow_tree
+
+
 def get_design_voice_metrics():
     """获取 design 音色拥有量指标（上线至今累计 + 相比7天前的变化）
 
@@ -931,6 +1129,9 @@ def main():
     print("  获取 TTS 采纳率数据...")
     tts_adoption = get_tts_adoption_data()
 
+    print("  获取未生成用户行为流...")
+    non_gen_flow = get_non_gen_flow_data()
+
     data = {
         'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S') + ' (北京时间)',
         'user_tiers': user_tiers,
@@ -943,6 +1144,7 @@ def main():
         'exit_distribution': exit_distribution,
         'design_voice': design_voice,
         'tts_adoption': tts_adoption,
+        'non_gen_flow': non_gen_flow,
     }
 
     # 保存为 JSON - 使用脚本所在目录
