@@ -363,7 +363,8 @@ def get_rating_data():
             query = """
             SELECT
                 (SELECT ep.value.int_value FROM UNNEST(event_params) ep WHERE ep.key = 'action') as action,
-                COUNT(*) as count
+                COUNT(*) as count,
+                COUNT(DISTINCT user_pseudo_id) as users
             FROM `noiz-430406.analytics_510746763.events_intraday_*`
             WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
                 AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
@@ -375,7 +376,8 @@ def get_rating_data():
             WITH {get_user_tier_cte()}
             SELECT
                 (SELECT ep.value.int_value FROM UNNEST(e.event_params) ep WHERE ep.key = 'action') as action,
-                COUNT(*) as count
+                COUNT(*) as count,
+                COUNT(DISTINCT e.user_pseudo_id) as users
             FROM `noiz-430406.analytics_510746763.events_intraday_*` e
             INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
             WHERE e._TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
@@ -386,14 +388,17 @@ def get_rating_data():
             """
 
         rows = run_query(query)
-        tier_result = {'like': 0, 'dislike': 0, 'unknown': 0, 'total': 0}
+        tier_result = {'like': 0, 'dislike': 0, 'unknown': 0, 'total': 0, 'like_users': 0, 'dislike_users': 0}
         for row in rows:
             action = row.get('action')
             count = row.get('count', 0)
+            users = row.get('users', 0)
             if action == 1:  # 点赞
                 tier_result['like'] += count
+                tier_result['like_users'] += users
             elif action == 2:  # 点踩
                 tier_result['dislike'] += count
+                tier_result['dislike_users'] += users
             else:
                 tier_result['unknown'] += count
             tier_result['total'] += count
@@ -401,6 +406,9 @@ def get_rating_data():
         # 计算好评率：点赞 / (点赞 + 点踩)
         valid_total = tier_result['like'] + tier_result['dislike']
         tier_result['like_rate'] = round(tier_result['like'] / valid_total * 100, 1) if valid_total > 0 else 0
+        # 人均点赞/点踩次数
+        tier_result['avg_like'] = round(tier_result['like'] / tier_result['like_users'], 1) if tier_result['like_users'] > 0 else 0
+        tier_result['avg_dislike'] = round(tier_result['dislike'] / tier_result['dislike_users'], 1) if tier_result['dislike_users'] > 0 else 0
 
         results[tier] = tier_result
 

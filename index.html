@@ -629,6 +629,10 @@
                     <div class="rating-display" id="ratingDisplay"></div>
                     <div id="ratingFooter" style="text-align: center; color: #718096; font-size: 11px; margin-top: 10px;"></div>
                 </div>
+                <div class="detail-card">
+                    <div class="detail-title">评价用户统计 <span style="font-size: 11px; color: #718096; font-weight: normal;"> - 近7天</span></div>
+                    <div id="ratingUserStats"></div>
+                </div>
             </div>
         </div>
 
@@ -1287,6 +1291,39 @@
                     * 好评率 = 点赞 / (点赞+点踩)
                 `;
             }
+
+            // 右侧卡片：去重人数 + 人均次数
+            const likeUsers = rating.like_users || 0;
+            const dislikeUsers = rating.dislike_users || 0;
+            const avgLike = rating.avg_like || 0;
+            const avgDislike = rating.avg_dislike || 0;
+            document.getElementById('ratingUserStats').innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 16px; padding: 10px 0;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 28px;">👍</div>
+                        <div>
+                            <div style="font-size: 24px; font-weight: 700; color: #48bb78;">${likeUsers.toLocaleString()} <span style="font-size: 14px; font-weight: 400; color: #a0aec0;">人</span></div>
+                            <div style="font-size: 12px; color: #718096;">去重点赞人数</div>
+                        </div>
+                        <div style="margin-left: auto; text-align: right;">
+                            <div style="font-size: 24px; font-weight: 700;">${avgLike}</div>
+                            <div style="font-size: 12px; color: #718096;">人均点赞次数</div>
+                        </div>
+                    </div>
+                    <div style="border-top: 1px solid rgba(255,255,255,0.06);"></div>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 28px;">👎</div>
+                        <div>
+                            <div style="font-size: 24px; font-weight: 700; color: #f56565;">${dislikeUsers.toLocaleString()} <span style="font-size: 14px; font-weight: 400; color: #a0aec0;">人</span></div>
+                            <div style="font-size: 12px; color: #718096;">去重点踩人数</div>
+                        </div>
+                        <div style="margin-left: auto; text-align: right;">
+                            <div style="font-size: 24px; font-weight: 700;">${avgDislike}</div>
+                            <div style="font-size: 12px; color: #718096;">人均点踩次数</div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // 评价视图切换事件
