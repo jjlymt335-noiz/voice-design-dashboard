@@ -834,9 +834,12 @@
                 return;
             }
 
-            // 恢复漏斗图显示
+            // 恢复漏斗图显示（从 Sankey 切回）
             document.getElementById('funnelChart').style.display = '';
-            document.getElementById('funnelDetails').style.width = '';
+            document.getElementById('funnelChart').style.height = '400px';
+            document.getElementById('funnelDetails').style.display = '';
+            const summaryEl = document.getElementById('nonGenFlowSummary');
+            if (summaryEl) summaryEl.remove();
 
             const data = getTieredData(dashboardData.funnel, currentPeriod, currentTier) || {};
 
@@ -1007,8 +1010,7 @@
             });
         }
 
-        // 渲染未生成用户行为流
-        // GA 风格未生成用户行为流 - 逐层展开
+        // GA 风格 Sankey 路径图
         function renderNonGenFlow() {
             const flow = dashboardData.non_gen_flow;
             if (!flow || !flow.step1) {
@@ -1017,150 +1019,118 @@
                 return;
             }
 
-            // 隐藏 echarts 漏斗图，用 funnelDetails 区域展示流
-            document.getElementById('funnelChart').style.display = 'none';
-            const container = document.getElementById('funnelDetails');
-            container.style.width = '100%';
+            // 用整个 funnel-container 区域
+            document.getElementById('funnelDetails').style.display = 'none';
+            const chartDom = document.getElementById('funnelChart');
+            chartDom.style.display = '';
+            chartDom.style.height = '520px';
 
-            const COLORS = ['#4285f4', '#ea4335', '#fbbc04', '#34a853', '#a0aec0'];
-
-            // 摘要
-            let html = `<div style="color:#5f6368;font-size:13px;margin-bottom:16px;line-height:1.6;">
-                近14天曝光 <strong>${flow.total_exposed.toLocaleString()}</strong> 人，
+            // 摘要信息插入到 funnel-container 前面
+            let summaryEl = document.getElementById('nonGenFlowSummary');
+            if (!summaryEl) {
+                summaryEl = document.createElement('div');
+                summaryEl.id = 'nonGenFlowSummary';
+                summaryEl.style.cssText = 'color:#5f6368;font-size:13px;margin-bottom:12px;line-height:1.6;';
+                chartDom.parentElement.insertBefore(summaryEl, chartDom);
+            }
+            summaryEl.innerHTML = `近14天曝光 <strong>${flow.total_exposed.toLocaleString()}</strong> 人，
                 已生成 ${flow.total_generated.toLocaleString()} 人（${(flow.total_generated/flow.total_exposed*100).toFixed(1)}%），
-                <strong style="color:#ea4335;">未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>
-            </div>`;
+                <strong style="color:#ea4335;">未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>，
+                其中 ${flow.non_gen_with_events.toLocaleString()} 人有后续行为`;
 
-            // 第1步标题
-            html += `<div style="font-size:12px;color:#80868b;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
-                第1步 · 曝光后首个动作 <span style="color:#5f6368;">(${flow.non_gen_with_events.toLocaleString()} 人有后续行为)</span>
-            </div>`;
+            // 构建 Sankey 数据
+            const nodes = [];
+            const links = [];
+            const nodeSet = new Set();
+            const COLORS_S1 = ['#4285f4', '#ea4335', '#fbbc04', '#34a853'];
+            const COLORS_S2 = ['#5e97f6', '#ef6c6c', '#fdd663', '#57bb8a'];
+            const COLORS_S3 = ['#8ab4f8', '#f28b82', '#fde293', '#81c995'];
 
-            // 第1步条形图
+            function addNode(name, color, depth) {
+                if (!nodeSet.has(name)) {
+                    nodeSet.add(name);
+                    nodes.push({
+                        name,
+                        itemStyle: { color, borderColor: color },
+                        depth
+                    });
+                }
+            }
+
             flow.step1.forEach((s1, i) => {
-                const color = COLORS[Math.min(i, 4)];
-                const hasChildren = s1.step2 && s1.step2.length > 0;
-                html += `<div class="ga-flow-row" data-depth="1" data-idx="${i}" style="margin-bottom:2px;">
-                    <div class="ga-flow-bar-wrap" style="display:flex;align-items:center;padding:8px 12px;border-radius:6px;cursor:${hasChildren ? 'pointer' : 'default'};transition:background 0.15s;"
-                         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
-                        ${hasChildren ? '<span class="ga-flow-arrow" style="display:inline-block;width:18px;font-size:11px;color:#80868b;transition:transform 0.2s;flex-shrink:0;">▶</span>' : '<span style="width:18px;flex-shrink:0;"></span>'}
-                        <div style="flex:1;min-width:0;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                                <span style="font-size:13px;font-weight:500;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s1.name}</span>
-                                <span style="font-size:12px;color:#5f6368;flex-shrink:0;margin-left:8px;">${s1.count.toLocaleString()} 人 · ${s1.pct}%</span>
-                            </div>
-                            <div style="height:20px;background:#e8eaed;border-radius:2px;overflow:hidden;">
-                                <div style="height:100%;width:${s1.pct}%;background:${color};border-radius:2px;transition:width 0.3s;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ga-flow-children" style="display:none;margin-left:30px;border-left:2px solid ${color};padding-left:12px;"></div>
-                </div>`;
+                const s1Key = s1.name;
+                const c1 = COLORS_S1[Math.min(i, 3)];
+                addNode(s1Key, c1, 0);
+
+                if (s1.step2) {
+                    s1.step2.forEach((s2, j) => {
+                        // 同名节点加后缀避免冲突
+                        const s2Key = s2.name + (s2.name === s1.name ? '②' : '');
+                        const c2 = COLORS_S2[Math.min(j, 3)];
+                        addNode(s2Key, c2, 1);
+                        links.push({ source: s1Key, target: s2Key, value: s2.count, lineStyle: { color: c1, opacity: 0.15 } });
+
+                        if (s2.step3) {
+                            s2.step3.forEach((s3, k) => {
+                                let s3Key = s3.name;
+                                // 避免与 step1/step2 同名
+                                while (nodeSet.has(s3Key) && nodes.find(n => n.name === s3Key)?.depth !== 2) {
+                                    s3Key += '③';
+                                }
+                                const c3 = COLORS_S3[Math.min(k, 3)];
+                                addNode(s3Key, c3, 2);
+                                links.push({ source: s2Key, target: s3Key, value: s3.count, lineStyle: { color: c2, opacity: 0.12 } });
+                            });
+                        }
+                    });
+                }
             });
 
-            container.innerHTML = html;
-
-            // 绑定第1步点击展开
-            container.querySelectorAll('.ga-flow-row[data-depth="1"]').forEach(row => {
-                const barWrap = row.querySelector('.ga-flow-bar-wrap');
-                const childrenDiv = row.querySelector('.ga-flow-children');
-                const arrow = row.querySelector('.ga-flow-arrow');
-                const idx = parseInt(row.dataset.idx);
-                const s1 = flow.step1[idx];
-                if (!s1.step2 || !s1.step2.length) return;
-
-                barWrap.addEventListener('click', () => {
-                    const isOpen = childrenDiv.style.display !== 'none';
-                    // 关闭所有同级
-                    container.querySelectorAll('.ga-flow-row[data-depth="1"] .ga-flow-children').forEach(c => c.style.display = 'none');
-                    container.querySelectorAll('.ga-flow-row[data-depth="1"] .ga-flow-arrow').forEach(a => { if(a) a.style.transform = 'rotate(0deg)'; });
-
-                    if (!isOpen) {
-                        arrow.style.transform = 'rotate(90deg)';
-                        childrenDiv.style.display = 'block';
-                        renderStep2Children(childrenDiv, s1, COLORS);
+            const chart = echarts.init(chartDom);
+            chart.setOption({
+                tooltip: {
+                    trigger: 'item',
+                    triggerOn: 'mousemove',
+                    formatter: function(params) {
+                        if (params.dataType === 'node') {
+                            return `<strong>${params.name}</strong><br/>${params.value.toLocaleString()} 人`;
+                        }
+                        return `${params.data.source} → ${params.data.target}<br/>${params.data.value.toLocaleString()} 人`;
                     }
-                });
-            });
-        }
-
-        function renderStep2Children(container, s1, COLORS) {
-            let html = `<div style="font-size:11px;color:#80868b;font-weight:500;margin:8px 0 6px;text-transform:uppercase;letter-spacing:0.5px;">
-                第2步 · ${s1.name} 之后
-            </div>`;
-            const parentTotal = s1.step2.reduce((sum, s) => sum + s.count, 0);
-
-            s1.step2.forEach((s2, i) => {
-                const color = COLORS[Math.min(i, 4)];
-                const hasChildren = s2.step3 && s2.step3.length > 0;
-                html += `<div class="ga-flow-row" data-depth="2" data-idx="${i}" style="margin-bottom:2px;">
-                    <div class="ga-flow-bar-wrap" style="display:flex;align-items:center;padding:6px 10px;border-radius:6px;cursor:${hasChildren ? 'pointer' : 'default'};transition:background 0.15s;"
-                         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
-                        ${hasChildren ? '<span class="ga-flow-arrow" style="display:inline-block;width:16px;font-size:10px;color:#80868b;transition:transform 0.2s;flex-shrink:0;">▶</span>' : '<span style="width:16px;flex-shrink:0;"></span>'}
-                        <div style="flex:1;min-width:0;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-                                <span style="font-size:12px;font-weight:500;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s2.name}</span>
-                                <span style="font-size:11px;color:#5f6368;flex-shrink:0;margin-left:8px;">${s2.count.toLocaleString()} 人 · ${s2.pct}%</span>
-                            </div>
-                            <div style="height:16px;background:#e8eaed;border-radius:2px;overflow:hidden;">
-                                <div style="height:100%;width:${s2.pct}%;background:${color};border-radius:2px;opacity:0.8;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="ga-flow-children" style="display:none;margin-left:26px;border-left:2px solid ${color};padding-left:10px;"></div>
-                </div>`;
-            });
-
-            container.innerHTML = html;
-
-            // 绑定第2步点击展开第3步
-            container.querySelectorAll('.ga-flow-row[data-depth="2"]').forEach(row => {
-                const barWrap = row.querySelector('.ga-flow-bar-wrap');
-                const childrenDiv = row.querySelector('.ga-flow-children');
-                const arrow = row.querySelector('.ga-flow-arrow');
-                const idx = parseInt(row.dataset.idx);
-                const s2 = s1.step2[idx];
-                if (!s2.step3 || !s2.step3.length) return;
-
-                barWrap.addEventListener('click', () => {
-                    const isOpen = childrenDiv.style.display !== 'none';
-                    container.querySelectorAll('.ga-flow-row[data-depth="2"] .ga-flow-children').forEach(c => c.style.display = 'none');
-                    container.querySelectorAll('.ga-flow-row[data-depth="2"] .ga-flow-arrow').forEach(a => { if(a) a.style.transform = 'rotate(0deg)'; });
-
-                    if (!isOpen) {
-                        arrow.style.transform = 'rotate(90deg)';
-                        childrenDiv.style.display = 'block';
-                        renderStep3Children(childrenDiv, s2, COLORS);
-                    }
-                });
-            });
-        }
-
-        function renderStep3Children(container, s2, COLORS) {
-            let html = `<div style="font-size:11px;color:#80868b;font-weight:500;margin:6px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">
-                第3步 · ${s2.name} 之后
-            </div>`;
-
-            s2.step3.forEach((s3, i) => {
-                const color = COLORS[Math.min(i, 4)];
-                html += `<div style="margin-bottom:2px;">
-                    <div style="display:flex;align-items:center;padding:5px 10px;border-radius:6px;transition:background 0.15s;"
-                         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
-                        <span style="width:16px;flex-shrink:0;"></span>
-                        <div style="flex:1;min-width:0;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-                                <span style="font-size:12px;font-weight:500;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s3.name}</span>
-                                <span style="font-size:11px;color:#5f6368;flex-shrink:0;margin-left:8px;">${s3.count.toLocaleString()} 人 · ${s3.pct}%</span>
-                            </div>
-                            <div style="height:14px;background:#e8eaed;border-radius:2px;overflow:hidden;">
-                                <div style="height:100%;width:${s3.pct}%;background:${color};border-radius:2px;opacity:0.65;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+                },
+                series: [{
+                    type: 'sankey',
+                    layout: 'none',
+                    left: 20,
+                    right: 20,
+                    top: 30,
+                    bottom: 10,
+                    nodeWidth: 28,
+                    nodeGap: 14,
+                    draggable: false,
+                    layoutIterations: 0,
+                    orient: 'horizontal',
+                    label: {
+                        show: true,
+                        position: 'top',
+                        fontSize: 12,
+                        color: '#202124',
+                        fontWeight: 500,
+                        formatter: function(params) {
+                            const name = params.name.replace(/[②③]+$/, '');
+                            return name + '\n' + params.value.toLocaleString();
+                        }
+                    },
+                    lineStyle: {
+                        curveness: 0.5
+                    },
+                    data: nodes,
+                    links: links
+                }]
             });
 
-            container.innerHTML = html;
+            // 保存引用用于 resize
+            chartDom._echartsInstance = chart;
         }
 
         // 渲染步骤细分
