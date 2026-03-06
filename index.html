@@ -587,13 +587,6 @@
             </div>
         </div>
 
-        <!-- 未生成用户行为流 -->
-        <div class="section">
-            <div class="section-title">未生成用户行为流 <span style="font-size: 12px; color: #718096; font-weight: normal;">（近14天，曝光后30分钟内前3步）</span></div>
-            <div id="nonGenFlowSummary" style="color: #718096; font-size: 12px; margin-bottom: 12px;"></div>
-            <div id="nonGenFlowChart" style="width: 100%;"></div>
-        </div>
-
         <!-- 细分数据 -->
         <div class="section">
             <div class="section-title">步骤细分</div>
@@ -813,7 +806,6 @@
         // 渲染看板
         function renderDashboard() {
             renderFunnel();
-            renderNonGenFlow();
             renderStepDetails();
             renderRating();
             renderUpgrade();
@@ -836,6 +828,16 @@
 
         // 渲染漏斗
         function renderFunnel() {
+            // 未生成分层：显示 GA 风格行为流
+            if (currentTier === 'none' && dashboardData.non_gen_flow?.step1) {
+                renderNonGenFlow();
+                return;
+            }
+
+            // 恢复漏斗图显示
+            document.getElementById('funnelChart').style.display = '';
+            document.getElementById('funnelDetails').style.width = '';
+
             const data = getTieredData(dashboardData.funnel, currentPeriod, currentTier) || {};
 
             const steps = [
@@ -1006,137 +1008,159 @@
         }
 
         // 渲染未生成用户行为流
+        // GA 风格未生成用户行为流 - 逐层展开
         function renderNonGenFlow() {
             const flow = dashboardData.non_gen_flow;
             if (!flow || !flow.step1) {
-                document.getElementById('nonGenFlowChart').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:40px;">暂无数据</div>';
+                document.getElementById('funnelChart').style.display = 'none';
+                document.getElementById('funnelDetails').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:40px;">暂无行为流数据</div>';
                 return;
             }
 
-            // Summary
-            document.getElementById('nonGenFlowSummary').innerHTML =
-                `总曝光 ${flow.total_exposed.toLocaleString()} 人，已生成 ${flow.total_generated.toLocaleString()} 人（${(flow.total_generated/flow.total_exposed*100).toFixed(1)}%），` +
-                `<strong>未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>，其中 ${flow.non_gen_with_events.toLocaleString()} 人有后续行为`;
+            // 隐藏 echarts 漏斗图，用 funnelDetails 区域展示流
+            document.getElementById('funnelChart').style.display = 'none';
+            const container = document.getElementById('funnelDetails');
+            container.style.width = '100%';
 
-            // 颜色
-            const COLORS = {
-                step1: ['#667eea', '#764ba2', '#f5576c', '#a0aec0'],
-                step2: ['#4facfe', '#43e97b', '#fa709a', '#a0aec0'],
-                step3: ['#38f9d7', '#fccb90', '#a18cd1', '#a0aec0']
-            };
+            const COLORS = ['#4285f4', '#ea4335', '#fbbc04', '#34a853', '#a0aec0'];
 
-            // 构建 HTML 流程图
-            let html = '<div style="overflow-x:auto;">';
-            html += '<div style="display:flex;gap:0;min-width:900px;align-items:flex-start;">';
+            // 摘要
+            let html = `<div style="color:#5f6368;font-size:13px;margin-bottom:16px;line-height:1.6;">
+                近14天曝光 <strong>${flow.total_exposed.toLocaleString()}</strong> 人，
+                已生成 ${flow.total_generated.toLocaleString()} 人（${(flow.total_generated/flow.total_exposed*100).toFixed(1)}%），
+                <strong style="color:#ea4335;">未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>
+            </div>`;
 
-            // Step 1 列
-            html += '<div style="flex:1;min-width:200px;">';
-            html += '<div style="text-align:center;font-weight:600;color:#4a5568;margin-bottom:8px;font-size:13px;">第1步</div>';
+            // 第1步标题
+            html += `<div style="font-size:12px;color:#80868b;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;">
+                第1步 · 曝光后首个动作 <span style="color:#5f6368;">(${flow.non_gen_with_events.toLocaleString()} 人有后续行为)</span>
+            </div>`;
+
+            // 第1步条形图
             flow.step1.forEach((s1, i) => {
-                const color = COLORS.step1[Math.min(i, 3)];
-                html += `<div class="flow-node" style="border-left:4px solid ${color};background:#f7fafc;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;" data-s1="${i}">
-                    <div style="font-weight:600;font-size:13px;color:#2d3748;">${s1.name}</div>
-                    <div style="font-size:12px;color:#718096;">${s1.count.toLocaleString()} 人 (${s1.pct}%)</div>
+                const color = COLORS[Math.min(i, 4)];
+                const hasChildren = s1.step2 && s1.step2.length > 0;
+                html += `<div class="ga-flow-row" data-depth="1" data-idx="${i}" style="margin-bottom:2px;">
+                    <div class="ga-flow-bar-wrap" style="display:flex;align-items:center;padding:8px 12px;border-radius:6px;cursor:${hasChildren ? 'pointer' : 'default'};transition:background 0.15s;"
+                         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
+                        ${hasChildren ? '<span class="ga-flow-arrow" style="display:inline-block;width:18px;font-size:11px;color:#80868b;transition:transform 0.2s;flex-shrink:0;">▶</span>' : '<span style="width:18px;flex-shrink:0;"></span>'}
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                <span style="font-size:13px;font-weight:500;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s1.name}</span>
+                                <span style="font-size:12px;color:#5f6368;flex-shrink:0;margin-left:8px;">${s1.count.toLocaleString()} 人 · ${s1.pct}%</span>
+                            </div>
+                            <div style="height:20px;background:#e8eaed;border-radius:2px;overflow:hidden;">
+                                <div style="height:100%;width:${s1.pct}%;background:${color};border-radius:2px;transition:width 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ga-flow-children" style="display:none;margin-left:30px;border-left:2px solid ${color};padding-left:12px;"></div>
                 </div>`;
             });
-            html += '</div>';
 
-            // 箭头列
-            html += '<div style="display:flex;align-items:center;padding:0 4px;color:#cbd5e0;font-size:20px;margin-top:30px;">→</div>';
+            container.innerHTML = html;
 
-            // Step 2 列
-            html += '<div style="flex:1.2;min-width:220px;">';
-            html += '<div style="text-align:center;font-weight:600;color:#4a5568;margin-bottom:8px;font-size:13px;">第2步</div>';
-            html += '<div id="flowStep2Content">';
-            // 默认显示第一个 step1 的 step2
-            html += renderFlowStep2(flow.step1[0], COLORS);
-            html += '</div></div>';
+            // 绑定第1步点击展开
+            container.querySelectorAll('.ga-flow-row[data-depth="1"]').forEach(row => {
+                const barWrap = row.querySelector('.ga-flow-bar-wrap');
+                const childrenDiv = row.querySelector('.ga-flow-children');
+                const arrow = row.querySelector('.ga-flow-arrow');
+                const idx = parseInt(row.dataset.idx);
+                const s1 = flow.step1[idx];
+                if (!s1.step2 || !s1.step2.length) return;
 
-            // 箭头列
-            html += '<div style="display:flex;align-items:center;padding:0 4px;color:#cbd5e0;font-size:20px;margin-top:30px;">→</div>';
+                barWrap.addEventListener('click', () => {
+                    const isOpen = childrenDiv.style.display !== 'none';
+                    // 关闭所有同级
+                    container.querySelectorAll('.ga-flow-row[data-depth="1"] .ga-flow-children').forEach(c => c.style.display = 'none');
+                    container.querySelectorAll('.ga-flow-row[data-depth="1"] .ga-flow-arrow').forEach(a => { if(a) a.style.transform = 'rotate(0deg)'; });
 
-            // Step 3 列
-            html += '<div style="flex:1.2;min-width:220px;">';
-            html += '<div style="text-align:center;font-weight:600;color:#4a5568;margin-bottom:8px;font-size:13px;">第3步</div>';
-            html += '<div id="flowStep3Content">';
-            // 默认显示第一个step1的第一个step2的step3
-            if (flow.step1[0]?.step2?.[0]?.step3) {
-                html += renderFlowStep3(flow.step1[0].step2[0], COLORS);
-            }
-            html += '</div></div>';
-
-            html += '</div></div>';
-
-            document.getElementById('nonGenFlowChart').innerHTML = html;
-
-            // 点击 step1 节点切换 step2
-            document.querySelectorAll('.flow-node[data-s1]').forEach(node => {
-                node.addEventListener('click', function() {
-                    const idx = parseInt(this.dataset.s1);
-                    const s1 = flow.step1[idx];
-                    document.querySelectorAll('.flow-node[data-s1]').forEach(n => n.style.background = '#f7fafc');
-                    this.style.background = '#edf2f7';
-                    document.getElementById('flowStep2Content').innerHTML = renderFlowStep2(s1, COLORS);
-                    // 默认选中第一个 step2
-                    if (s1.step2?.[0]?.step3) {
-                        document.getElementById('flowStep3Content').innerHTML = renderFlowStep3(s1.step2[0], COLORS);
-                    } else {
-                        document.getElementById('flowStep3Content').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
-                    }
-                    // 绑定 step2 点击
-                    bindStep2Clicks(s1, COLORS);
-                });
-            });
-            // 初始绑定
-            bindStep2Clicks(flow.step1[0], COLORS);
-            // 高亮第一个step1
-            const firstS1 = document.querySelector('.flow-node[data-s1="0"]');
-            if (firstS1) firstS1.style.background = '#edf2f7';
-        }
-
-        function bindStep2Clicks(s1Data, COLORS) {
-            document.querySelectorAll('.flow-node[data-s2]').forEach(node => {
-                node.addEventListener('click', function() {
-                    const idx = parseInt(this.dataset.s2);
-                    const s2 = s1Data.step2[idx];
-                    document.querySelectorAll('.flow-node[data-s2]').forEach(n => n.style.background = '#f7fafc');
-                    this.style.background = '#edf2f7';
-                    if (s2?.step3?.length) {
-                        document.getElementById('flowStep3Content').innerHTML = renderFlowStep3(s2, COLORS);
-                    } else {
-                        document.getElementById('flowStep3Content').innerHTML = '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
+                    if (!isOpen) {
+                        arrow.style.transform = 'rotate(90deg)';
+                        childrenDiv.style.display = 'block';
+                        renderStep2Children(childrenDiv, s1, COLORS);
                     }
                 });
             });
-            // 高亮第一个step2
-            const firstS2 = document.querySelector('.flow-node[data-s2="0"]');
-            if (firstS2) firstS2.style.background = '#edf2f7';
         }
 
-        function renderFlowStep2(s1, COLORS) {
-            if (!s1?.step2?.length) return '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
-            let html = `<div style="font-size:11px;color:#a0aec0;text-align:center;margin-bottom:4px;">来自: ${s1.name}</div>`;
+        function renderStep2Children(container, s1, COLORS) {
+            let html = `<div style="font-size:11px;color:#80868b;font-weight:500;margin:8px 0 6px;text-transform:uppercase;letter-spacing:0.5px;">
+                第2步 · ${s1.name} 之后
+            </div>`;
+            const parentTotal = s1.step2.reduce((sum, s) => sum + s.count, 0);
+
             s1.step2.forEach((s2, i) => {
-                const color = COLORS.step2[Math.min(i, 3)];
-                html += `<div class="flow-node" style="border-left:4px solid ${color};background:#f7fafc;border-radius:8px;padding:10px 12px;margin-bottom:6px;cursor:pointer;" data-s2="${i}">
-                    <div style="font-weight:600;font-size:13px;color:#2d3748;">${s2.name}</div>
-                    <div style="font-size:12px;color:#718096;">${s2.count.toLocaleString()} 人 (${s2.pct}%)</div>
+                const color = COLORS[Math.min(i, 4)];
+                const hasChildren = s2.step3 && s2.step3.length > 0;
+                html += `<div class="ga-flow-row" data-depth="2" data-idx="${i}" style="margin-bottom:2px;">
+                    <div class="ga-flow-bar-wrap" style="display:flex;align-items:center;padding:6px 10px;border-radius:6px;cursor:${hasChildren ? 'pointer' : 'default'};transition:background 0.15s;"
+                         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
+                        ${hasChildren ? '<span class="ga-flow-arrow" style="display:inline-block;width:16px;font-size:10px;color:#80868b;transition:transform 0.2s;flex-shrink:0;">▶</span>' : '<span style="width:16px;flex-shrink:0;"></span>'}
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+                                <span style="font-size:12px;font-weight:500;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s2.name}</span>
+                                <span style="font-size:11px;color:#5f6368;flex-shrink:0;margin-left:8px;">${s2.count.toLocaleString()} 人 · ${s2.pct}%</span>
+                            </div>
+                            <div style="height:16px;background:#e8eaed;border-radius:2px;overflow:hidden;">
+                                <div style="height:100%;width:${s2.pct}%;background:${color};border-radius:2px;opacity:0.8;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ga-flow-children" style="display:none;margin-left:26px;border-left:2px solid ${color};padding-left:10px;"></div>
                 </div>`;
             });
-            return html;
+
+            container.innerHTML = html;
+
+            // 绑定第2步点击展开第3步
+            container.querySelectorAll('.ga-flow-row[data-depth="2"]').forEach(row => {
+                const barWrap = row.querySelector('.ga-flow-bar-wrap');
+                const childrenDiv = row.querySelector('.ga-flow-children');
+                const arrow = row.querySelector('.ga-flow-arrow');
+                const idx = parseInt(row.dataset.idx);
+                const s2 = s1.step2[idx];
+                if (!s2.step3 || !s2.step3.length) return;
+
+                barWrap.addEventListener('click', () => {
+                    const isOpen = childrenDiv.style.display !== 'none';
+                    container.querySelectorAll('.ga-flow-row[data-depth="2"] .ga-flow-children').forEach(c => c.style.display = 'none');
+                    container.querySelectorAll('.ga-flow-row[data-depth="2"] .ga-flow-arrow').forEach(a => { if(a) a.style.transform = 'rotate(0deg)'; });
+
+                    if (!isOpen) {
+                        arrow.style.transform = 'rotate(90deg)';
+                        childrenDiv.style.display = 'block';
+                        renderStep3Children(childrenDiv, s2, COLORS);
+                    }
+                });
+            });
         }
 
-        function renderFlowStep3(s2, COLORS) {
-            if (!s2?.step3?.length) return '<div style="color:#a0aec0;text-align:center;padding:20px;font-size:12px;">无后续步骤</div>';
-            let html = `<div style="font-size:11px;color:#a0aec0;text-align:center;margin-bottom:4px;">来自: ${s2.name}</div>`;
+        function renderStep3Children(container, s2, COLORS) {
+            let html = `<div style="font-size:11px;color:#80868b;font-weight:500;margin:6px 0 4px;text-transform:uppercase;letter-spacing:0.5px;">
+                第3步 · ${s2.name} 之后
+            </div>`;
+
             s2.step3.forEach((s3, i) => {
-                const color = COLORS.step3[Math.min(i, 3)];
-                html += `<div style="border-left:4px solid ${color};background:#f7fafc;border-radius:8px;padding:10px 12px;margin-bottom:6px;">
-                    <div style="font-weight:600;font-size:13px;color:#2d3748;">${s3.name}</div>
-                    <div style="font-size:12px;color:#718096;">${s3.count.toLocaleString()} 人 (${s3.pct}%)</div>
+                const color = COLORS[Math.min(i, 4)];
+                html += `<div style="margin-bottom:2px;">
+                    <div style="display:flex;align-items:center;padding:5px 10px;border-radius:6px;transition:background 0.15s;"
+                         onmouseover="this.style.background='#f1f3f4'" onmouseout="this.style.background='transparent'">
+                        <span style="width:16px;flex-shrink:0;"></span>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                                <span style="font-size:12px;font-weight:500;color:#202124;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s3.name}</span>
+                                <span style="font-size:11px;color:#5f6368;flex-shrink:0;margin-left:8px;">${s3.count.toLocaleString()} 人 · ${s3.pct}%</span>
+                            </div>
+                            <div style="height:14px;background:#e8eaed;border-radius:2px;overflow:hidden;">
+                                <div style="height:100%;width:${s3.pct}%;background:${color};border-radius:2px;opacity:0.65;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>`;
             });
-            return html;
+
+            container.innerHTML = html;
         }
 
         // 渲染步骤细分

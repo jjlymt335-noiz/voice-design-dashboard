@@ -672,7 +672,7 @@ def get_non_gen_flow_data():
             ROW_NUMBER() OVER (PARTITION BY e.user_pseudo_id ORDER BY e.event_timestamp) as step_num
         FROM all_events e
         JOIN non_gen_exposures ng ON e.user_pseudo_id = ng.user_pseudo_id
-        WHERE e.event_timestamp > ng.exposure_ts
+        WHERE e.event_timestamp > ng.exposure_ts + 1000000  -- 1秒缓冲，排除并发事件
           AND e.event_timestamp <= ng.exposure_ts + 1800000000
           AND e.event_name NOT IN (
               'page_voice_design_exposure',
@@ -680,6 +680,7 @@ def get_non_gen_flow_data():
               'user_engagement', 'scroll', 'page_view',
               'click', 'file_download', 'view_search_results'
           )
+          AND (NOT ENDS_WITH(e.event_name, '_bounce') OR e.event_name = 'page_voice_design_bounce')  -- 排除其他页bounce，保留Design bounce
     ),
     user_paths AS (
         SELECT user_pseudo_id,
