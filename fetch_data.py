@@ -457,6 +457,60 @@ def get_upgrade_data():
 
     return results
 
+def get_credit_data():
+    """获取 voice design credit 消耗占比（近7天 vs 上一个7天）"""
+
+    def query_credits(start_interval, end_interval):
+        """查询指定时间范围的 credit 数据"""
+        query = f"""
+        WITH base AS (
+            SELECT
+                (SELECT value.string_value FROM UNNEST(event_params) WHERE key = 'type') AS ep_type,
+                COALESCE(
+                    (SELECT CAST(value.int_value AS FLOAT64) FROM UNNEST(event_params) WHERE key = 'credits'),
+                    (SELECT value.double_value FROM UNNEST(event_params) WHERE key = 'credits'),
+                    (SELECT SAFE_CAST(value.string_value AS FLOAT64) FROM UNNEST(event_params) WHERE key = 'credits')
+                ) AS credits
+            FROM `noiz-430406.analytics_510746763.events_*`
+            WHERE event_name = 'credit_reduce'
+                AND _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {start_interval} DAY))
+                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {end_interval} DAY))
+        )
+        SELECT
+            COALESCE(SUM(IF(ep_type = 'voice_design', credits, 0)), 0) AS voice_design_credits,
+            COALESCE(SUM(credits), 0) AS total_credits
+        FROM base
+        WHERE credits IS NOT NULL
+        """
+        rows = run_query(query)
+        if rows:
+            return rows[0]
+        return {'voice_design_credits': 0, 'total_credits': 0}
+
+    # 近7天
+    current = query_credits(7, 0)
+    # 上一个7天
+    prev = query_credits(14, 7)
+
+    vd_credits = float(current.get('voice_design_credits', 0))
+    total_credits = float(current.get('total_credits', 0))
+    share = round(vd_credits / total_credits * 100, 2) if total_credits > 0 else 0
+
+    prev_vd = float(prev.get('voice_design_credits', 0))
+    prev_total = float(prev.get('total_credits', 0))
+    prev_share = round(prev_vd / prev_total * 100, 2) if prev_total > 0 else 0
+
+    return {
+        'voice_design_credits': round(vd_credits, 1),
+        'total_credits': round(total_credits, 1),
+        'share': share,
+        'prev_voice_design_credits': round(prev_vd, 1),
+        'prev_total_credits': round(prev_total, 1),
+        'prev_share': prev_share,
+        'share_delta': round(share - prev_share, 2)
+    }
+
+
 def _query_design_voice_snapshot(end_date_condition):
     """查询截止某日的 design 音色累计指标快照
 
@@ -1130,6 +1184,9 @@ def main():
     print("  获取付费弹窗数据...")
     upgrade = get_upgrade_data()
 
+    print("  获取 credit 消耗数据...")
+    credit = get_credit_data()
+
     print("  获取深层指标...")
     deep_metrics = get_deep_metrics()
 
@@ -1155,6 +1212,7 @@ def main():
         'step_details': step_details,
         'rating': rating,
         'upgrade': upgrade,
+        'credit': credit,
         'deep_metrics': deep_metrics,
         'trend': trend,
         'exit_distribution': exit_distribution,

@@ -750,6 +750,13 @@
                         </div>
                     </div>
                     <div class="metric-item">
+                        <div class="metric-name">Voice Design Credit 消耗占比 <span style="font-size: 11px; color: #a0aec0;">（近7天）</span></div>
+                        <div class="metric-value-row">
+                            <span class="metric-main-value" id="creditShare">-</span>
+                            <span class="metric-sub-value" id="creditShareDetail"></span>
+                        </div>
+                    </div>
+                    <div class="metric-item">
                         <div class="metric-name">诊断：通过design入口进入付费页的比例 <span style="font-size: 11px; color: #a0aec0;">（点击Upgrade且付费用户 / 全站付费用户，跟随周期切换）</span></div>
                         <div class="metric-value-row">
                             <span class="metric-main-value" id="designPaymentPct">-</span>
@@ -1343,6 +1350,19 @@
             const confirm = upgrade['voice_design_upgrade_confirm_click'] || { count: 0, users: 0 };
             document.getElementById('upgradeClickCount').textContent = `${confirm.count.toLocaleString()} 次`;
             document.getElementById('upgradeClickDetail').textContent = `${confirm.users.toLocaleString()} 人`;
+
+            // Credit 消耗占比
+            const credit = dashboardData.credit || {};
+            const share = credit.share || 0;
+            const delta = credit.share_delta || 0;
+            const deltaColor = delta > 0 ? '#48bb78' : delta < 0 ? '#f56565' : '#a0aec0';
+            const deltaSign = delta > 0 ? '+' : '';
+            document.getElementById('creditShare').innerHTML =
+                `${share}% <span style="font-size: 13px; color: ${deltaColor}; margin-left: 8px;">较上个7天 ${deltaSign}${delta}pp</span>`;
+            const vdCredits = credit.voice_design_credits || 0;
+            const totalCredits = credit.total_credits || 0;
+            document.getElementById('creditShareDetail').textContent =
+                `${vdCredits.toLocaleString()} / ${totalCredits.toLocaleString()} credits`;
         }
 
         let trendViewMode = 'absolute'; // 'absolute' or 'percentage'
