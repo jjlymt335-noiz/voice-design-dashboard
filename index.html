@@ -1025,7 +1025,7 @@
             chartDom.style.display = '';
             chartDom.style.height = '520px';
 
-            // 摘要信息插入到 funnel-container 前面
+            // 摘要
             let summaryEl = document.getElementById('nonGenFlowSummary');
             if (!summaryEl) {
                 summaryEl = document.createElement('div');
@@ -1038,53 +1038,38 @@
                 <strong style="color:#ea4335;">未生成 ${flow.non_gen_total.toLocaleString()} 人（${(flow.non_gen_total/flow.total_exposed*100).toFixed(1)}%）</strong>，
                 其中 ${flow.non_gen_with_events.toLocaleString()} 人有后续行为`;
 
-            // 构建 Sankey 数据
+            // 构建 Sankey 数据 - 节点名用 "S1_名称" 格式确保唯一
             const nodes = [];
             const links = [];
-            const nodeSet = new Set();
-            const COLORS_S1 = ['#4285f4', '#ea4335', '#fbbc04', '#34a853'];
-            const COLORS_S2 = ['#5e97f6', '#ef6c6c', '#fdd663', '#57bb8a'];
-            const COLORS_S3 = ['#8ab4f8', '#f28b82', '#fde293', '#81c995'];
+            const nodeNames = {};  // 内部key -> 显示名
 
-            function addNode(name, color, depth) {
-                if (!nodeSet.has(name)) {
-                    nodeSet.add(name);
-                    nodes.push({
-                        name,
-                        itemStyle: { color, borderColor: color },
-                        depth
-                    });
-                }
+            function addNode(key, label, color) {
+                nodes.push({ name: key, itemStyle: { color, borderColor: color } });
+                nodeNames[key] = label;
             }
 
+            const C = ['#4285f4', '#ea4335', '#fbbc04', '#34a853', '#a0aec0'];
+
             flow.step1.forEach((s1, i) => {
-                const s1Key = s1.name;
-                const c1 = COLORS_S1[Math.min(i, 3)];
-                addNode(s1Key, c1, 0);
+                const s1Key = 'S1_' + i;
+                addNode(s1Key, s1.name, C[Math.min(i, 4)]);
 
-                if (s1.step2) {
-                    s1.step2.forEach((s2, j) => {
-                        // 同名节点加后缀避免冲突
-                        const s2Key = s2.name + (s2.name === s1.name ? '②' : '');
-                        const c2 = COLORS_S2[Math.min(j, 3)];
-                        addNode(s2Key, c2, 1);
-                        links.push({ source: s1Key, target: s2Key, value: s2.count, lineStyle: { color: c1, opacity: 0.15 } });
+                (s1.step2 || []).forEach((s2, j) => {
+                    const s2Key = 'S2_' + i + '_' + j;
+                    addNode(s2Key, s2.name, C[Math.min(j, 4)]);
+                    links.push({ source: s1Key, target: s2Key, value: s2.count });
 
-                        if (s2.step3) {
-                            s2.step3.forEach((s3, k) => {
-                                let s3Key = s3.name;
-                                // 避免与 step1/step2 同名
-                                while (nodeSet.has(s3Key) && nodes.find(n => n.name === s3Key)?.depth !== 2) {
-                                    s3Key += '③';
-                                }
-                                const c3 = COLORS_S3[Math.min(k, 3)];
-                                addNode(s3Key, c3, 2);
-                                links.push({ source: s2Key, target: s3Key, value: s3.count, lineStyle: { color: c2, opacity: 0.12 } });
-                            });
-                        }
+                    (s2.step3 || []).forEach((s3, k) => {
+                        const s3Key = 'S3_' + i + '_' + j + '_' + k;
+                        addNode(s3Key, s3.name, C[Math.min(k, 4)]);
+                        links.push({ source: s2Key, target: s3Key, value: s3.count });
                     });
-                }
+                });
             });
+
+            // 先销毁旧实例
+            const existingChart = echarts.getInstanceByDom(chartDom);
+            if (existingChart) existingChart.dispose();
 
             const chart = echarts.init(chartDom);
             chart.setOption({
@@ -1093,44 +1078,45 @@
                     triggerOn: 'mousemove',
                     formatter: function(params) {
                         if (params.dataType === 'node') {
-                            return `<strong>${params.name}</strong><br/>${params.value.toLocaleString()} 人`;
+                            const label = nodeNames[params.name] || params.name;
+                            return '<strong>' + label + '</strong><br/>' + params.value.toLocaleString() + ' 人';
                         }
-                        return `${params.data.source} → ${params.data.target}<br/>${params.data.value.toLocaleString()} 人`;
+                        const src = nodeNames[params.data.source] || params.data.source;
+                        const tgt = nodeNames[params.data.target] || params.data.target;
+                        return src + ' → ' + tgt + '<br/>' + params.data.value.toLocaleString() + ' 人';
                     }
                 },
                 series: [{
                     type: 'sankey',
-                    layout: 'none',
-                    left: 20,
-                    right: 20,
-                    top: 30,
-                    bottom: 10,
-                    nodeWidth: 28,
-                    nodeGap: 14,
-                    draggable: false,
-                    layoutIterations: 0,
+                    left: 40,
+                    right: 160,
+                    top: 20,
+                    bottom: 20,
+                    nodeWidth: 24,
+                    nodeGap: 12,
+                    draggable: true,
                     orient: 'horizontal',
+                    layoutIterations: 32,
+                    emphasis: { focus: 'adjacency' },
                     label: {
                         show: true,
-                        position: 'top',
+                        position: 'right',
                         fontSize: 12,
-                        color: '#202124',
-                        fontWeight: 500,
+                        color: '#333',
                         formatter: function(params) {
-                            const name = params.name.replace(/[②③]+$/, '');
-                            return name + '\n' + params.value.toLocaleString();
+                            const label = nodeNames[params.name] || params.name;
+                            return label + '\n' + params.value.toLocaleString();
                         }
                     },
                     lineStyle: {
-                        curveness: 0.5
+                        color: 'gradient',
+                        curveness: 0.5,
+                        opacity: 0.25
                     },
                     data: nodes,
                     links: links
                 }]
             });
-
-            // 保存引用用于 resize
-            chartDom._echartsInstance = chart;
         }
 
         // 渲染步骤细分
