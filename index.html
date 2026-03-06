@@ -841,7 +841,10 @@
             funnelChart.style.height = '400px';
             funnelChart.style.width = '';
             funnelDetails.style.display = '';
-            document.querySelector('.funnel-container').style.display = 'flex';
+            const funnelContainer = document.querySelector('.funnel-container');
+            funnelContainer.style.display = 'flex';
+            funnelContainer.style.maxHeight = '';
+            funnelContainer.style.overflowY = '';
             const summaryEl = document.getElementById('nonGenFlowSummary');
             if (summaryEl) summaryEl.remove();
 
@@ -1026,13 +1029,22 @@
             // 隐藏详情面板，Sankey 撑满整个 funnel-container
             document.getElementById('funnelDetails').style.display = 'none';
             const container = document.querySelector('.funnel-container');
-            container.style.display = 'block';  // 改为 block 让 chart 撑满
+            container.style.display = 'block';
+            container.style.maxHeight = '600px';
+            container.style.overflowY = 'auto';
 
             const chartDom = document.getElementById('funnelChart');
             chartDom.style.display = '';
             chartDom.style.flex = '';
             chartDom.style.width = '100%';
-            chartDom.style.height = '450px';
+            // 动态高度：根据节点数量计算
+            const totalNodes = flow.step1.reduce((sum, s1) => {
+                const s2count = (s1.step2 || []).length;
+                const s3count = (s1.step2 || []).reduce((s, s2) => s + (s2.step3 || []).length, 0);
+                return sum + 1 + s2count + s3count;
+            }, 0);
+            const chartHeight = Math.max(500, totalNodes * 45);
+            chartDom.style.height = chartHeight + 'px';
 
             // 摘要文字放到 funnel-container 上方
             let summaryEl = document.getElementById('nonGenFlowSummary');

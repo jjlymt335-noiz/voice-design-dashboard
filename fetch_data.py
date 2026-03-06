@@ -740,13 +740,18 @@ def get_non_gen_flow_data():
 
     total_with_steps = sum(step1_counts.values())
 
-    def build_top3(counter, total):
+    def build_top3(counter, total, min_pct=0):
+        """取top3，低于 min_pct% 的也归入其他"""
         top3 = counter.most_common(3)
-        others_count = total - sum(c for _, c in top3)
         result = []
+        kept_count = 0
         for name, count in top3:
-            result.append({'name': get_label(name), 'event': name,
-                           'count': count, 'pct': round(count / total * 100, 1)})
+            pct = round(count / total * 100, 1) if total else 0
+            if pct >= min_pct:
+                result.append({'name': get_label(name), 'event': name,
+                               'count': count, 'pct': pct})
+                kept_count += count
+        others_count = total - kept_count
         if others_count > 0:
             result.append({'name': '其他', 'event': 'others',
                            'count': others_count, 'pct': round(others_count / total * 100, 1)})
@@ -780,7 +785,7 @@ def get_non_gen_flow_data():
             s2_node = {
                 'name': get_label(s2_name), 'event': s2_name,
                 'count': s2_count, 'pct': round(s2_count / s1_total_for_s2 * 100, 1),
-                'step3': build_top3(step1_step2_step3[s1_name][s2_name], s2_total_for_s3) if s2_total_for_s3 else []
+                'step3': build_top3(step1_step2_step3[s1_name][s2_name], s2_total_for_s3, min_pct=5) if s2_total_for_s3 else []
             }
             s1_node['step2'].append(s2_node)
         if s2_others > 0:
