@@ -1,13 +1,6 @@
 {
-  "update_time": "2026-03-06 23:14:47 (北京时间)",
+  "update_time": "2026-03-06 23:49:40 (北京时间)",
   "user_tiers": {
-    "mid": {
-      "label": "中频",
-      "description": "1.5~4次/天",
-      "users": 1835,
-      "percentage": 9.7,
-      "avg_generates": 2.36
-    },
     "none": {
       "label": "未生成",
       "description": "无生成行为",
@@ -29,6 +22,13 @@
       "percentage": 5.1,
       "avg_generates": 6.15
     },
+    "mid": {
+      "label": "中频",
+      "description": "1.5~4次/天",
+      "users": 1835,
+      "percentage": 9.7,
+      "avg_generates": 2.36
+    },
     "total_users": 18920,
     "definition": "按用户平均每天generate次数分层（总次数/活跃天数，基于近14天）"
   },
@@ -39,29 +39,29 @@
           "count": 1362,
           "users": 1110
         },
-        "page_voice_design_exposure": {
-          "count": 3020,
-          "users": 1860
-        },
         "voice_design_save_voice_use": {
           "count": 150,
           "users": 143
         },
-        "voice_design_select_click": {
-          "count": 217,
-          "users": 201
-        },
-        "voice_design_save_success": {
-          "count": 179,
-          "users": 168
+        "page_voice_design_exposure": {
+          "count": 3020,
+          "users": 1860
         },
         "voice_design_generate_click": {
           "count": 1137,
           "users": 485
         },
+        "voice_design_save_success": {
+          "count": 179,
+          "users": 168
+        },
         "voice_library_voice_design_click": {
           "count": 177,
           "users": 151
+        },
+        "voice_design_select_click": {
+          "count": 217,
+          "users": 201
         },
         "voice_design_complete_back": {
           "count": 4,
@@ -69,17 +69,21 @@
         }
       },
       "high": {
-        "voice_design_save_success": {
-          "count": 27,
-          "users": 22
-        },
         "voice_design_generate_click": {
           "count": 494,
           "users": 74
         },
+        "voice_design_save_success": {
+          "count": 27,
+          "users": 22
+        },
         "creation_voice_design_click": {
           "count": 95,
           "users": 59
+        },
+        "voice_design_save_voice_use": {
+          "count": 24,
+          "users": 19
         },
         "page_voice_design_exposure": {
           "count": 253,
@@ -88,10 +92,6 @@
         "voice_design_complete_back": {
           "count": 1,
           "users": 1
-        },
-        "voice_design_save_voice_use": {
-          "count": 24,
-          "users": 19
         },
         "voice_design_select_click": {
           "count": 42,
@@ -103,22 +103,6 @@
         }
       },
       "mid": {
-        "voice_design_save_success": {
-          "count": 59,
-          "users": 56
-        },
-        "voice_design_generate_click": {
-          "count": 395,
-          "users": 167
-        },
-        "creation_voice_design_click": {
-          "count": 181,
-          "users": 127
-        },
-        "voice_design_save_voice_use": {
-          "count": 49,
-          "users": 47
-        },
         "page_voice_design_exposure": {
           "count": 345,
           "users": 171
@@ -127,6 +111,18 @@
           "count": 2,
           "users": 2
         },
+        "voice_design_generate_click": {
+          "count": 395,
+          "users": 167
+        },
+        "voice_design_save_voice_use": {
+          "count": 49,
+          "users": 47
+        },
+        "creation_voice_design_click": {
+          "count": 181,
+          "users": 127
+        },
         "voice_design_select_click": {
           "count": 68,
           "users": 63
@@ -134,28 +130,28 @@
         "voice_library_voice_design_click": {
           "count": 23,
           "users": 21
+        },
+        "voice_design_save_success": {
+          "count": 59,
+          "users": 56
         }
       },
       "low": {
-        "page_voice_design_exposure": {
-          "count": 423,
-          "users": 254
-        },
-        "voice_design_generate_click": {
-          "count": 245,
-          "users": 242
-        },
-        "voice_design_complete_back": {
-          "count": 1,
-          "users": 1
-        },
         "voice_design_save_voice_use": {
           "count": 75,
           "users": 75
         },
+        "page_voice_design_exposure": {
+          "count": 423,
+          "users": 254
+        },
         "voice_design_save_success": {
           "count": 91,
           "users": 88
+        },
+        "voice_design_generate_click": {
+          "count": 245,
+          "users": 242
         },
         "creation_voice_design_click": {
           "count": 209,
@@ -164,6 +160,10 @@
         "voice_design_select_click": {
           "count": 105,
           "users": 102
+        },
+        "voice_design_complete_back": {
+          "count": 1,
+          "users": 1
         },
         "voice_library_voice_design_click": {
           "count": 19,
@@ -183,13 +183,13 @@
           "count": 863,
           "users": 737
         },
-        "voice_design_save_success": {
-          "count": 1,
-          "users": 1
-        },
         "voice_library_voice_design_click": {
           "count": 113,
           "users": 97
+        },
+        "voice_design_save_success": {
+          "count": 1,
+          "users": 1
         }
       }
     },
@@ -199,25 +199,21 @@
           "count": 8325,
           "users": 4950
         },
-        "creation_voice_design_click": {
-          "count": 3769,
-          "users": 3012
-        },
         "voice_design_generate_click": {
           "count": 3141,
           "users": 1386
-        },
-        "voice_design_save_voice_use": {
-          "count": 475,
-          "users": 446
         },
         "voice_design_select_click": {
           "count": 758,
           "users": 650
         },
-        "voice_design_complete_back": {
-          "count": 13,
-          "users": 12
+        "creation_voice_design_click": {
+          "count": 3769,
+          "users": 3012
+        },
+        "voice_design_save_voice_use": {
+          "count": 475,
+          "users": 446
         },
         "voice_design_save_success": {
           "count": 613,
@@ -226,16 +222,20 @@
         "voice_library_voice_design_click": {
           "count": 492,
           "users": 406
+        },
+        "voice_design_complete_back": {
+          "count": 13,
+          "users": 12
         }
       },
       "high": {
-        "voice_design_save_voice_use": {
-          "count": 76,
-          "users": 58
+        "creation_voice_design_click": {
+          "count": 273,
+          "users": 158
         },
-        "page_voice_design_exposure": {
-          "count": 698,
-          "users": 221
+        "voice_design_select_click": {
+          "count": 161,
+          "users": 103
         },
         "voice_design_complete_back": {
           "count": 2,
@@ -245,82 +245,58 @@
           "count": 1328,
           "users": 211
         },
-        "voice_library_voice_design_click": {
-          "count": 63,
-          "users": 41
-        },
-        "voice_design_select_click": {
-          "count": 161,
-          "users": 103
-        },
         "voice_design_save_success": {
           "count": 137,
           "users": 73
         },
-        "creation_voice_design_click": {
-          "count": 273,
-          "users": 158
+        "voice_library_voice_design_click": {
+          "count": 63,
+          "users": 41
+        },
+        "voice_design_save_voice_use": {
+          "count": 76,
+          "users": 58
+        },
+        "page_voice_design_exposure": {
+          "count": 698,
+          "users": 221
         }
       },
       "mid": {
-        "page_voice_design_exposure": {
-          "count": 1045,
-          "users": 464
-        },
-        "voice_design_save_voice_use": {
-          "count": 135,
-          "users": 126
-        },
-        "voice_design_complete_back": {
-          "count": 4,
-          "users": 4
-        },
-        "voice_design_generate_click": {
-          "count": 1063,
-          "users": 449
-        },
-        "voice_design_save_success": {
-          "count": 170,
-          "users": 152
+        "voice_library_voice_design_click": {
+          "count": 59,
+          "users": 47
         },
         "voice_design_select_click": {
           "count": 224,
           "users": 187
         },
-        "voice_library_voice_design_click": {
-          "count": 59,
-          "users": 47
+        "voice_design_save_success": {
+          "count": 170,
+          "users": 152
+        },
+        "voice_design_generate_click": {
+          "count": 1063,
+          "users": 449
         },
         "creation_voice_design_click": {
           "count": 496,
           "users": 344
+        },
+        "page_voice_design_exposure": {
+          "count": 1045,
+          "users": 464
+        },
+        "voice_design_complete_back": {
+          "count": 4,
+          "users": 4
+        },
+        "voice_design_save_voice_use": {
+          "count": 135,
+          "users": 126
         }
       },
       "low": {
-        "voice_design_save_voice_use": {
-          "count": 251,
-          "users": 249
-        },
-        "page_voice_design_exposure": {
-          "count": 1280,
-          "users": 733
-        },
-        "voice_design_complete_back": {
-          "count": 7,
-          "users": 6
-        },
-        "voice_design_generate_click": {
-          "count": 732,
-          "users": 714
-        },
-        "voice_design_save_success": {
-          "count": 295,
-          "users": 286
-        },
-        "creation_voice_design_click": {
-          "count": 634,
-          "users": 515
-        },
         "voice_design_select_click": {
           "count": 360,
           "users": 347
@@ -328,13 +304,33 @@
         "voice_library_voice_design_click": {
           "count": 76,
           "users": 66
+        },
+        "voice_design_save_success": {
+          "count": 295,
+          "users": 286
+        },
+        "page_voice_design_exposure": {
+          "count": 1280,
+          "users": 733
+        },
+        "voice_design_generate_click": {
+          "count": 732,
+          "users": 714
+        },
+        "voice_design_complete_back": {
+          "count": 7,
+          "users": 6
+        },
+        "creation_voice_design_click": {
+          "count": 634,
+          "users": 515
+        },
+        "voice_design_save_voice_use": {
+          "count": 251,
+          "users": 249
         }
       },
       "none": {
-        "page_voice_design_exposure": {
-          "count": 5302,
-          "users": 3532
-        },
         "voice_design_save_voice_use": {
           "count": 6,
           "users": 6
@@ -346,6 +342,10 @@
         "creation_voice_design_click": {
           "count": 2335,
           "users": 1973
+        },
+        "page_voice_design_exposure": {
+          "count": 5302,
+          "users": 3532
         },
         "voice_design_select_click": {
           "count": 6,
@@ -359,17 +359,17 @@
     },
     "近7天": {
       "大盘": {
-        "voice_design_save_voice_use": {
-          "count": 1097,
-          "users": 1012
+        "voice_library_voice_design_click": {
+          "count": 1152,
+          "users": 938
         },
         "voice_design_select_click": {
           "count": 1701,
           "users": 1465
         },
-        "voice_library_voice_design_click": {
-          "count": 1152,
-          "users": 938
+        "voice_design_save_voice_use": {
+          "count": 1097,
+          "users": 1012
         },
         "voice_design_save_success": {
           "count": 1394,
@@ -379,77 +379,69 @@
           "count": 18648,
           "users": 10826
         },
-        "voice_design_complete_back": {
-          "count": 39,
-          "users": 36
+        "creation_voice_design_click": {
+          "count": 8382,
+          "users": 6621
         },
         "voice_design_generate_click": {
           "count": 7010,
           "users": 3122
         },
-        "creation_voice_design_click": {
-          "count": 8382,
-          "users": 6621
+        "voice_design_complete_back": {
+          "count": 39,
+          "users": 36
         }
       },
       "high": {
+        "voice_design_save_voice_use": {
+          "count": 176,
+          "users": 130
+        },
         "page_voice_design_exposure": {
           "count": 1584,
           "users": 472
-        },
-        "voice_design_generate_click": {
-          "count": 2923,
-          "users": 467
-        },
-        "voice_design_complete_back": {
-          "count": 13,
-          "users": 11
         },
         "voice_design_save_success": {
           "count": 278,
           "users": 168
         },
+        "voice_design_generate_click": {
+          "count": 2923,
+          "users": 467
+        },
         "creation_voice_design_click": {
           "count": 619,
           "users": 343
         },
-        "voice_design_save_voice_use": {
-          "count": 176,
-          "users": 130
+        "voice_library_voice_design_click": {
+          "count": 147,
+          "users": 88
         },
         "voice_design_select_click": {
           "count": 335,
           "users": 220
         },
-        "voice_library_voice_design_click": {
-          "count": 147,
-          "users": 88
+        "voice_design_complete_back": {
+          "count": 13,
+          "users": 11
         }
       },
       "mid": {
-        "voice_design_save_voice_use": {
-          "count": 326,
-          "users": 296
-        },
         "page_voice_design_exposure": {
           "count": 2294,
           "users": 992
         },
-        "creation_voice_design_click": {
-          "count": 1052,
-          "users": 730
-        },
-        "voice_design_complete_back": {
-          "count": 10,
-          "users": 10
-        },
-        "voice_design_select_click": {
-          "count": 519,
-          "users": 428
+        "voice_design_save_voice_use": {
+          "count": 326,
+          "users": 296
         },
         "voice_library_voice_design_click": {
           "count": 144,
           "users": 110
+        },
+        "voice_design_select_click": {
+          "count": 519,
+          "users": 428
         },
         "voice_design_save_success": {
           "count": 409,
@@ -458,9 +450,33 @@
         "voice_design_generate_click": {
           "count": 2367,
           "users": 981
+        },
+        "creation_voice_design_click": {
+          "count": 1052,
+          "users": 730
+        },
+        "voice_design_complete_back": {
+          "count": 10,
+          "users": 10
         }
       },
       "low": {
+        "voice_library_voice_design_click": {
+          "count": 177,
+          "users": 153
+        },
+        "voice_design_select_click": {
+          "count": 821,
+          "users": 791
+        },
+        "voice_design_save_success": {
+          "count": 685,
+          "users": 663
+        },
+        "voice_design_generate_click": {
+          "count": 1682,
+          "users": 1646
+        },
         "creation_voice_design_click": {
           "count": 1494,
           "users": 1197
@@ -469,59 +485,43 @@
           "count": 15,
           "users": 14
         },
-        "voice_design_select_click": {
-          "count": 821,
-          "users": 791
-        },
-        "voice_library_voice_design_click": {
-          "count": 177,
-          "users": 153
-        },
-        "voice_design_save_success": {
-          "count": 685,
-          "users": 663
+        "voice_design_save_voice_use": {
+          "count": 573,
+          "users": 564
         },
         "page_voice_design_exposure": {
           "count": 2961,
           "users": 1664
-        },
-        "voice_design_generate_click": {
-          "count": 1682,
-          "users": 1646
-        },
-        "voice_design_save_voice_use": {
-          "count": 573,
-          "users": 564
         }
       },
       "none": {
-        "voice_design_save_voice_use": {
-          "count": 10,
-          "users": 10
-        },
-        "page_voice_design_exposure": {
-          "count": 11809,
-          "users": 7698
-        },
-        "creation_voice_design_click": {
-          "count": 5146,
-          "users": 4308
+        "voice_library_voice_design_click": {
+          "count": 673,
+          "users": 578
         },
         "voice_design_select_click": {
           "count": 12,
           "users": 12
         },
-        "voice_design_complete_back": {
-          "count": 1,
-          "users": 1
-        },
         "voice_design_save_success": {
           "count": 11,
           "users": 11
         },
-        "voice_library_voice_design_click": {
-          "count": 673,
-          "users": 578
+        "page_voice_design_exposure": {
+          "count": 11809,
+          "users": 7698
+        },
+        "voice_design_complete_back": {
+          "count": 1,
+          "users": 1
+        },
+        "voice_design_save_voice_use": {
+          "count": 10,
+          "users": 10
+        },
+        "creation_voice_design_click": {
+          "count": 5146,
+          "users": 4308
         }
       }
     }
@@ -535,13 +535,13 @@
           "generate_with_prompt": 36
         },
         "entry_distribution": {
-          "creation_voice_design_click": {
-            "count": 1362,
-            "users": 1110
-          },
           "voice_library_voice_design_click": {
             "count": 177,
             "users": 151
+          },
+          "creation_voice_design_click": {
+            "count": 1362,
+            "users": 1110
           }
         },
         "save_adjustment": {
@@ -557,13 +557,13 @@
           "generate_with_prompt": 14
         },
         "entry_distribution": {
-          "voice_library_voice_design_click": {
-            "count": 20,
-            "users": 13
-          },
           "creation_voice_design_click": {
             "count": 95,
             "users": 59
+          },
+          "voice_library_voice_design_click": {
+            "count": 20,
+            "users": 13
           }
         },
         "save_adjustment": {
@@ -713,13 +713,13 @@
           "generate_with_prompt": 35
         },
         "entry_distribution": {
-          "creation_voice_design_click": {
-            "count": 634,
-            "users": 515
-          },
           "voice_library_voice_design_click": {
             "count": 76,
             "users": 66
+          },
+          "creation_voice_design_click": {
+            "count": 634,
+            "users": 515
           }
         },
         "save_adjustment": {
@@ -735,13 +735,13 @@
           "generate_with_prompt": 0
         },
         "entry_distribution": {
-          "voice_library_voice_design_click": {
-            "count": 290,
-            "users": 248
-          },
           "creation_voice_design_click": {
             "count": 2335,
             "users": 1973
+          },
+          "voice_library_voice_design_click": {
+            "count": 290,
+            "users": 248
           }
         },
         "save_adjustment": {
@@ -759,13 +759,13 @@
           "generate_with_prompt": 268
         },
         "entry_distribution": {
-          "voice_library_voice_design_click": {
-            "count": 1152,
-            "users": 938
-          },
           "creation_voice_design_click": {
             "count": 8382,
             "users": 6621
+          },
+          "voice_library_voice_design_click": {
+            "count": 1152,
+            "users": 938
           }
         },
         "save_adjustment": {
@@ -803,13 +803,13 @@
           "generate_with_prompt": 95
         },
         "entry_distribution": {
-          "voice_library_voice_design_click": {
-            "count": 144,
-            "users": 110
-          },
           "creation_voice_design_click": {
             "count": 1052,
             "users": 730
+          },
+          "voice_library_voice_design_click": {
+            "count": 144,
+            "users": 110
           }
         },
         "save_adjustment": {
@@ -825,13 +825,13 @@
           "generate_with_prompt": 90
         },
         "entry_distribution": {
-          "creation_voice_design_click": {
-            "count": 1494,
-            "users": 1197
-          },
           "voice_library_voice_design_click": {
             "count": 177,
             "users": 153
+          },
+          "creation_voice_design_click": {
+            "count": 1494,
+            "users": 1197
           }
         },
         "save_adjustment": {
@@ -870,46 +870,66 @@
       "dislike": 160,
       "unknown": 0,
       "total": 298,
-      "like_rate": 46.3
+      "like_users": 111,
+      "dislike_users": 70,
+      "like_rate": 46.3,
+      "avg_like": 1.2,
+      "avg_dislike": 2.3
     },
     "high": {
       "like": 34,
       "dislike": 56,
       "unknown": 0,
       "total": 90,
-      "like_rate": 37.8
+      "like_users": 27,
+      "dislike_users": 23,
+      "like_rate": 37.8,
+      "avg_like": 1.3,
+      "avg_dislike": 2.4
     },
     "mid": {
       "like": 37,
       "dislike": 61,
       "unknown": 0,
       "total": 98,
-      "like_rate": 37.8
+      "like_users": 28,
+      "dislike_users": 27,
+      "like_rate": 37.8,
+      "avg_like": 1.3,
+      "avg_dislike": 2.3
     },
     "low": {
       "like": 66,
       "dislike": 42,
       "unknown": 0,
       "total": 108,
-      "like_rate": 61.1
+      "like_users": 55,
+      "dislike_users": 19,
+      "like_rate": 61.1,
+      "avg_like": 1.2,
+      "avg_dislike": 2.2
     },
     "none": {
       "like": 0,
       "dislike": 1,
       "unknown": 0,
       "total": 1,
-      "like_rate": 0.0
+      "like_users": 0,
+      "dislike_users": 1,
+      "like_rate": 0.0,
+      "avg_like": 0,
+      "avg_dislike": 1.0
     }
   },
   "upgrade": {
     "大盘": {
-      "voice_design_upgrade_confirm_click": {
-        "count": 338,
-        "users": 320
-      },
       "voice_design_upgrade_popup": {
         "count": 1,
         "users": 1
+      },
+      "voice_design_upgrade_confirm_click": {
+        "count": 340,
+        "users": 322
       }
     },
     "high": {
@@ -1069,10 +1089,6 @@
   "trend": {
     "大盘": {
       "20260220": {
-        "creation_voice_design_click": {
-          "count": 896,
-          "users": 729
-        },
         "voice_design_generate_click": {
           "count": 987,
           "users": 360
@@ -1081,17 +1097,21 @@
           "count": 98,
           "users": 92
         },
-        "page_voice_design_exposure": {
-          "count": 1807,
-          "users": 1116
-        },
         "voice_design_select_click": {
           "count": 137,
           "users": 124
         },
+        "creation_voice_design_click": {
+          "count": 896,
+          "users": 729
+        },
         "voice_library_voice_design_click": {
           "count": 121,
           "users": 95
+        },
+        "page_voice_design_exposure": {
+          "count": 1807,
+          "users": 1116
         },
         "entry_composite": {
           "count": 1017,
@@ -1099,6 +1119,14 @@
         }
       },
       "20260221": {
+        "voice_library_voice_design_click": {
+          "count": 109,
+          "users": 85
+        },
+        "creation_voice_design_click": {
+          "count": 1011,
+          "users": 791
+        },
         "page_voice_design_exposure": {
           "count": 1906,
           "users": 1165
@@ -1107,17 +1135,9 @@
           "count": 98,
           "users": 90
         },
-        "voice_library_voice_design_click": {
-          "count": 109,
-          "users": 85
-        },
         "voice_design_generate_click": {
           "count": 1065,
           "users": 356
-        },
-        "creation_voice_design_click": {
-          "count": 1011,
-          "users": 791
         },
         "voice_design_select_click": {
           "count": 129,
@@ -1129,14 +1149,6 @@
         }
       },
       "20260222": {
-        "creation_voice_design_click": {
-          "count": 1199,
-          "users": 894
-        },
-        "page_voice_design_exposure": {
-          "count": 2184,
-          "users": 1265
-        },
         "voice_design_select_click": {
           "count": 150,
           "users": 135
@@ -1153,27 +1165,35 @@
           "count": 1238,
           "users": 411
         },
+        "creation_voice_design_click": {
+          "count": 1199,
+          "users": 894
+        },
+        "page_voice_design_exposure": {
+          "count": 2184,
+          "users": 1265
+        },
         "entry_composite": {
           "count": 1321,
           "users": 1002
         }
       },
       "20260223": {
-        "voice_library_voice_design_click": {
-          "count": 151,
-          "users": 127
+        "voice_design_select_click": {
+          "count": 120,
+          "users": 105
         },
         "voice_design_generate_click": {
           "count": 1090,
           "users": 332
         },
-        "voice_design_select_click": {
-          "count": 120,
-          "users": 105
-        },
         "voice_design_save_success": {
           "count": 85,
           "users": 77
+        },
+        "voice_library_voice_design_click": {
+          "count": 151,
+          "users": 127
         },
         "page_voice_design_exposure": {
           "count": 2130,
@@ -1189,21 +1209,21 @@
         }
       },
       "20260224": {
-        "creation_voice_design_click": {
-          "count": 908,
-          "users": 753
+        "voice_design_save_success": {
+          "count": 109,
+          "users": 91
         },
         "voice_design_generate_click": {
           "count": 919,
           "users": 324
         },
+        "creation_voice_design_click": {
+          "count": 908,
+          "users": 753
+        },
         "voice_design_select_click": {
           "count": 134,
           "users": 107
-        },
-        "voice_design_save_success": {
-          "count": 109,
-          "users": 91
         },
         "page_voice_design_exposure": {
           "count": 2259,
@@ -1219,10 +1239,6 @@
         }
       },
       "20260225": {
-        "voice_design_save_success": {
-          "count": 150,
-          "users": 122
-        },
         "voice_library_voice_design_click": {
           "count": 170,
           "users": 132
@@ -1231,17 +1247,21 @@
           "count": 2377,
           "users": 1438
         },
-        "creation_voice_design_click": {
-          "count": 928,
-          "users": 750
+        "voice_design_generate_click": {
+          "count": 672,
+          "users": 310
+        },
+        "voice_design_save_success": {
+          "count": 150,
+          "users": 122
         },
         "voice_design_select_click": {
           "count": 168,
           "users": 144
         },
-        "voice_design_generate_click": {
-          "count": 672,
-          "users": 310
+        "creation_voice_design_click": {
+          "count": 928,
+          "users": 750
         },
         "entry_composite": {
           "count": 1098,
@@ -1249,10 +1269,6 @@
         }
       },
       "20260226": {
-        "voice_library_voice_design_click": {
-          "count": 161,
-          "users": 129
-        },
         "voice_design_select_click": {
           "count": 166,
           "users": 130
@@ -1261,17 +1277,21 @@
           "count": 563,
           "users": 268
         },
-        "creation_voice_design_click": {
-          "count": 867,
-          "users": 709
+        "page_voice_design_exposure": {
+          "count": 2060,
+          "users": 1288
         },
         "voice_design_save_success": {
           "count": 138,
           "users": 110
         },
-        "page_voice_design_exposure": {
-          "count": 2060,
-          "users": 1288
+        "creation_voice_design_click": {
+          "count": 867,
+          "users": 709
+        },
+        "voice_library_voice_design_click": {
+          "count": 161,
+          "users": 129
         },
         "entry_composite": {
           "count": 1028,
@@ -1279,6 +1299,18 @@
         }
       },
       "20260227": {
+        "voice_design_generate_click": {
+          "count": 759,
+          "users": 372
+        },
+        "voice_design_select_click": {
+          "count": 190,
+          "users": 167
+        },
+        "voice_library_voice_design_click": {
+          "count": 152,
+          "users": 122
+        },
         "creation_voice_design_click": {
           "count": 960,
           "users": 802
@@ -1287,21 +1319,9 @@
           "count": 2306,
           "users": 1435
         },
-        "voice_library_voice_design_click": {
-          "count": 152,
-          "users": 122
-        },
         "voice_design_save_success": {
           "count": 157,
           "users": 143
-        },
-        "voice_design_select_click": {
-          "count": 190,
-          "users": 167
-        },
-        "voice_design_generate_click": {
-          "count": 759,
-          "users": 372
         },
         "entry_composite": {
           "count": 1112,
@@ -1309,6 +1329,22 @@
         }
       },
       "20260228": {
+        "voice_design_select_click": {
+          "count": 261,
+          "users": 229
+        },
+        "page_voice_design_exposure": {
+          "count": 2779,
+          "users": 1722
+        },
+        "creation_voice_design_click": {
+          "count": 1299,
+          "users": 1032
+        },
+        "voice_library_voice_design_click": {
+          "count": 190,
+          "users": 148
+        },
         "voice_design_generate_click": {
           "count": 1107,
           "users": 476
@@ -1317,47 +1353,31 @@
           "count": 221,
           "users": 195
         },
-        "page_voice_design_exposure": {
-          "count": 2779,
-          "users": 1722
-        },
-        "voice_library_voice_design_click": {
-          "count": 190,
-          "users": 148
-        },
-        "voice_design_select_click": {
-          "count": 261,
-          "users": 229
-        },
-        "creation_voice_design_click": {
-          "count": 1299,
-          "users": 1032
-        },
         "entry_composite": {
           "count": 1489,
           "users": 1180
         }
       },
       "20260301": {
-        "page_voice_design_exposure": {
-          "count": 2453,
-          "users": 1535
-        },
         "voice_library_voice_design_click": {
           "count": 149,
           "users": 134
         },
-        "creation_voice_design_click": {
-          "count": 1154,
-          "users": 941
+        "voice_design_generate_click": {
+          "count": 1005,
+          "users": 473
         },
         "voice_design_save_success": {
           "count": 194,
           "users": 178
         },
-        "voice_design_generate_click": {
-          "count": 1005,
-          "users": 473
+        "creation_voice_design_click": {
+          "count": 1154,
+          "users": 941
+        },
+        "page_voice_design_exposure": {
+          "count": 2453,
+          "users": 1535
         },
         "voice_design_select_click": {
           "count": 236,
@@ -1369,25 +1389,25 @@
         }
       },
       "20260302": {
-        "creation_voice_design_click": {
-          "count": 1200,
-          "users": 953
+        "page_voice_design_exposure": {
+          "count": 2785,
+          "users": 1640
         },
         "voice_design_select_click": {
           "count": 256,
           "users": 231
         },
-        "voice_design_generate_click": {
-          "count": 998,
-          "users": 463
-        },
-        "page_voice_design_exposure": {
-          "count": 2785,
-          "users": 1640
-        },
         "voice_library_voice_design_click": {
           "count": 169,
           "users": 136
+        },
+        "creation_voice_design_click": {
+          "count": 1200,
+          "users": 953
+        },
+        "voice_design_generate_click": {
+          "count": 998,
+          "users": 463
         },
         "voice_design_save_success": {
           "count": 209,
@@ -1399,10 +1419,6 @@
         }
       },
       "20260303": {
-        "voice_design_select_click": {
-          "count": 263,
-          "users": 234
-        },
         "voice_design_generate_click": {
           "count": 998,
           "users": 478
@@ -1415,13 +1431,17 @@
           "count": 2619,
           "users": 1591
         },
+        "voice_library_voice_design_click": {
+          "count": 148,
+          "users": 121
+        },
         "creation_voice_design_click": {
           "count": 1177,
           "users": 955
         },
-        "voice_library_voice_design_click": {
-          "count": 148,
-          "users": 121
+        "voice_design_select_click": {
+          "count": 263,
+          "users": 234
         },
         "entry_composite": {
           "count": 1325,
@@ -1429,6 +1449,14 @@
         }
       },
       "20260304": {
+        "creation_voice_design_click": {
+          "count": 1230,
+          "users": 986
+        },
+        "voice_design_generate_click": {
+          "count": 1006,
+          "users": 444
+        },
         "page_voice_design_exposure": {
           "count": 2686,
           "users": 1656
@@ -1441,14 +1469,6 @@
           "count": 231,
           "users": 179
         },
-        "creation_voice_design_click": {
-          "count": 1230,
-          "users": 986
-        },
-        "voice_design_generate_click": {
-          "count": 1006,
-          "users": 444
-        },
         "voice_design_select_click": {
           "count": 278,
           "users": 220
@@ -1459,17 +1479,13 @@
         }
       },
       "20260305": {
-        "voice_library_voice_design_click": {
-          "count": 177,
-          "users": 151
+        "voice_design_generate_click": {
+          "count": 1137,
+          "users": 485
         },
         "voice_design_save_success": {
           "count": 179,
           "users": 168
-        },
-        "voice_design_generate_click": {
-          "count": 1137,
-          "users": 485
         },
         "voice_design_select_click": {
           "count": 217,
@@ -1483,44 +1499,64 @@
           "count": 3020,
           "users": 1860
         },
+        "voice_library_voice_design_click": {
+          "count": 177,
+          "users": 151
+        },
         "entry_composite": {
           "count": 1539,
           "users": 1261
         }
       },
       "20260306": {
-        "voice_library_voice_design_click": {
-          "count": 144,
-          "users": 119
-        },
         "voice_design_generate_click": {
-          "count": 850,
-          "users": 386
+          "count": 861,
+          "users": 390
         },
         "page_voice_design_exposure": {
-          "count": 2428,
-          "users": 1531
-        },
-        "voice_design_save_success": {
-          "count": 181,
-          "users": 150
+          "count": 2479,
+          "users": 1552
         },
         "creation_voice_design_click": {
-          "count": 1109,
-          "users": 907
+          "count": 1132,
+          "users": 923
+        },
+        "voice_design_save_success": {
+          "count": 184,
+          "users": 153
+        },
+        "voice_library_voice_design_click": {
+          "count": 149,
+          "users": 122
         },
         "voice_design_select_click": {
-          "count": 219,
-          "users": 188
+          "count": 222,
+          "users": 191
         },
         "entry_composite": {
-          "count": 1253,
-          "users": 1026
+          "count": 1281,
+          "users": 1045
         }
       }
     },
     "high": {
       "20260220": {
+        "page_voice_design_exposure": {
+          "count": 259,
+          "users": 85
+        },
+        "voice_design_select_click": {
+          "count": 45,
+          "users": 36
+        },
+        "voice_design_save_success": {
+          "count": 32,
+          "users": 29
+        },
+        "voice_library_voice_design_click": {
+          "count": 17,
+          "users": 13
+        },
         "voice_design_generate_click": {
           "count": 522,
           "users": 80
@@ -1529,51 +1565,35 @@
           "count": 106,
           "users": 66
         },
-        "voice_design_select_click": {
-          "count": 45,
-          "users": 36
-        },
-        "page_voice_design_exposure": {
-          "count": 259,
-          "users": 85
-        },
-        "voice_library_voice_design_click": {
-          "count": 17,
-          "users": 13
-        },
-        "voice_design_save_success": {
-          "count": 32,
-          "users": 29
-        },
         "entry_composite": {
           "count": 123,
           "users": 79
         }
       },
       "20260221": {
-        "voice_design_save_success": {
-          "count": 30,
-          "users": 25
+        "creation_voice_design_click": {
+          "count": 119,
+          "users": 72
+        },
+        "voice_design_generate_click": {
+          "count": 580,
+          "users": 92
         },
         "voice_design_select_click": {
           "count": 44,
           "users": 36
         },
-        "voice_library_voice_design_click": {
-          "count": 17,
-          "users": 11
-        },
-        "creation_voice_design_click": {
-          "count": 119,
-          "users": 72
+        "voice_design_save_success": {
+          "count": 30,
+          "users": 25
         },
         "page_voice_design_exposure": {
           "count": 267,
           "users": 93
         },
-        "voice_design_generate_click": {
-          "count": 580,
-          "users": 92
+        "voice_library_voice_design_click": {
+          "count": 17,
+          "users": 11
         },
         "entry_composite": {
           "count": 136,
@@ -1581,29 +1601,29 @@
         }
       },
       "20260222": {
-        "voice_design_select_click": {
-          "count": 44,
-          "users": 38
-        },
-        "voice_library_voice_design_click": {
-          "count": 23,
-          "users": 16
+        "creation_voice_design_click": {
+          "count": 178,
+          "users": 95
         },
         "voice_design_generate_click": {
           "count": 697,
           "users": 110
         },
+        "voice_library_voice_design_click": {
+          "count": 23,
+          "users": 16
+        },
         "page_voice_design_exposure": {
           "count": 331,
           "users": 116
         },
+        "voice_design_select_click": {
+          "count": 44,
+          "users": 38
+        },
         "voice_design_save_success": {
           "count": 37,
           "users": 32
-        },
-        "creation_voice_design_click": {
-          "count": 178,
-          "users": 95
         },
         "entry_composite": {
           "count": 201,
@@ -1611,13 +1631,9 @@
         }
       },
       "20260223": {
-        "voice_design_select_click": {
-          "count": 42,
-          "users": 29
-        },
-        "page_voice_design_exposure": {
-          "count": 321,
-          "users": 100
+        "voice_library_voice_design_click": {
+          "count": 22,
+          "users": 16
         },
         "creation_voice_design_click": {
           "count": 163,
@@ -1627,9 +1643,13 @@
           "count": 665,
           "users": 97
         },
-        "voice_library_voice_design_click": {
-          "count": 22,
-          "users": 16
+        "voice_design_select_click": {
+          "count": 42,
+          "users": 29
+        },
+        "page_voice_design_exposure": {
+          "count": 321,
+          "users": 100
         },
         "voice_design_save_success": {
           "count": 29,
@@ -1641,22 +1661,6 @@
         }
       },
       "20260224": {
-        "creation_voice_design_click": {
-          "count": 101,
-          "users": 58
-        },
-        "voice_design_select_click": {
-          "count": 40,
-          "users": 25
-        },
-        "voice_design_generate_click": {
-          "count": 491,
-          "users": 74
-        },
-        "voice_design_save_success": {
-          "count": 33,
-          "users": 21
-        },
         "page_voice_design_exposure": {
           "count": 253,
           "users": 82
@@ -1665,35 +1669,51 @@
           "count": 24,
           "users": 15
         },
+        "voice_design_save_success": {
+          "count": 33,
+          "users": 21
+        },
+        "voice_design_generate_click": {
+          "count": 491,
+          "users": 74
+        },
+        "creation_voice_design_click": {
+          "count": 101,
+          "users": 58
+        },
+        "voice_design_select_click": {
+          "count": 40,
+          "users": 25
+        },
         "entry_composite": {
           "count": 125,
           "users": 73
         }
       },
       "20260225": {
-        "voice_design_select_click": {
-          "count": 40,
-          "users": 24
-        },
-        "voice_design_save_success": {
-          "count": 31,
-          "users": 17
+        "page_voice_design_exposure": {
+          "count": 220,
+          "users": 59
         },
         "creation_voice_design_click": {
           "count": 69,
           "users": 36
         },
-        "voice_library_voice_design_click": {
-          "count": 17,
-          "users": 12
-        },
         "voice_design_generate_click": {
           "count": 296,
           "users": 51
         },
-        "page_voice_design_exposure": {
-          "count": 220,
-          "users": 59
+        "voice_design_save_success": {
+          "count": 31,
+          "users": 17
+        },
+        "voice_design_select_click": {
+          "count": 40,
+          "users": 24
+        },
+        "voice_library_voice_design_click": {
+          "count": 17,
+          "users": 12
         },
         "entry_composite": {
           "count": 86,
@@ -1701,29 +1721,29 @@
         }
       },
       "20260226": {
-        "voice_design_select_click": {
-          "count": 43,
+        "creation_voice_design_click": {
+          "count": 31,
+          "users": 21
+        },
+        "page_voice_design_exposure": {
+          "count": 125,
+          "users": 35
+        },
+        "voice_design_generate_click": {
+          "count": 208,
+          "users": 31
+        },
+        "voice_design_save_success": {
+          "count": 35,
           "users": 16
         },
         "voice_library_voice_design_click": {
           "count": 12,
           "users": 8
         },
-        "page_voice_design_exposure": {
-          "count": 125,
-          "users": 35
-        },
-        "voice_design_save_success": {
-          "count": 35,
+        "voice_design_select_click": {
+          "count": 43,
           "users": 16
-        },
-        "voice_design_generate_click": {
-          "count": 208,
-          "users": 31
-        },
-        "creation_voice_design_click": {
-          "count": 31,
-          "users": 21
         },
         "entry_composite": {
           "count": 43,
@@ -1731,9 +1751,13 @@
         }
       },
       "20260227": {
-        "voice_library_voice_design_click": {
-          "count": 19,
-          "users": 9
+        "page_voice_design_exposure": {
+          "count": 173,
+          "users": 52
+        },
+        "voice_design_select_click": {
+          "count": 36,
+          "users": 28
         },
         "voice_design_generate_click": {
           "count": 285,
@@ -1743,17 +1767,13 @@
           "count": 61,
           "users": 39
         },
-        "voice_design_select_click": {
-          "count": 36,
-          "users": 28
+        "voice_library_voice_design_click": {
+          "count": 19,
+          "users": 9
         },
         "voice_design_save_success": {
           "count": 35,
           "users": 25
-        },
-        "page_voice_design_exposure": {
-          "count": 173,
-          "users": 52
         },
         "entry_composite": {
           "count": 80,
@@ -1761,29 +1781,29 @@
         }
       },
       "20260228": {
+        "voice_library_voice_design_click": {
+          "count": 30,
+          "users": 16
+        },
         "creation_voice_design_click": {
           "count": 108,
           "users": 62
-        },
-        "voice_design_generate_click": {
-          "count": 509,
-          "users": 83
-        },
-        "page_voice_design_exposure": {
-          "count": 272,
-          "users": 93
         },
         "voice_design_select_click": {
           "count": 58,
           "users": 41
         },
+        "page_voice_design_exposure": {
+          "count": 272,
+          "users": 93
+        },
         "voice_design_save_success": {
           "count": 47,
           "users": 32
         },
-        "voice_library_voice_design_click": {
-          "count": 30,
-          "users": 16
+        "voice_design_generate_click": {
+          "count": 509,
+          "users": 83
         },
         "entry_composite": {
           "count": 138,
@@ -1791,25 +1811,25 @@
         }
       },
       "20260301": {
-        "voice_design_select_click": {
-          "count": 37,
-          "users": 25
-        },
-        "voice_library_voice_design_click": {
-          "count": 17,
-          "users": 14
-        },
         "voice_design_save_success": {
           "count": 27,
           "users": 22
+        },
+        "page_voice_design_exposure": {
+          "count": 186,
+          "users": 68
         },
         "voice_design_generate_click": {
           "count": 385,
           "users": 65
         },
-        "page_voice_design_exposure": {
-          "count": 186,
-          "users": 68
+        "voice_library_voice_design_click": {
+          "count": 17,
+          "users": 14
+        },
+        "voice_design_select_click": {
+          "count": 37,
+          "users": 25
         },
         "creation_voice_design_click": {
           "count": 67,
@@ -1821,29 +1841,29 @@
         }
       },
       "20260302": {
-        "page_voice_design_exposure": {
-          "count": 255,
-          "users": 80
-        },
-        "creation_voice_design_click": {
-          "count": 110,
-          "users": 58
-        },
-        "voice_design_save_success": {
-          "count": 32,
-          "users": 23
+        "voice_design_generate_click": {
+          "count": 416,
+          "users": 73
         },
         "voice_design_select_click": {
           "count": 43,
           "users": 31
         },
-        "voice_design_generate_click": {
-          "count": 416,
-          "users": 73
+        "creation_voice_design_click": {
+          "count": 110,
+          "users": 58
         },
         "voice_library_voice_design_click": {
           "count": 18,
           "users": 12
+        },
+        "voice_design_save_success": {
+          "count": 32,
+          "users": 23
+        },
+        "page_voice_design_exposure": {
+          "count": 255,
+          "users": 80
         },
         "entry_composite": {
           "count": 128,
@@ -1851,29 +1871,29 @@
         }
       },
       "20260303": {
-        "page_voice_design_exposure": {
-          "count": 247,
-          "users": 85
-        },
-        "voice_design_select_click": {
-          "count": 50,
-          "users": 41
-        },
-        "voice_design_save_success": {
-          "count": 41,
-          "users": 28
+        "voice_design_generate_click": {
+          "count": 407,
+          "users": 81
         },
         "voice_library_voice_design_click": {
           "count": 17,
           "users": 14
         },
+        "voice_design_save_success": {
+          "count": 41,
+          "users": 28
+        },
+        "voice_design_select_click": {
+          "count": 50,
+          "users": 41
+        },
         "creation_voice_design_click": {
           "count": 105,
           "users": 56
         },
-        "voice_design_generate_click": {
-          "count": 407,
-          "users": 81
+        "page_voice_design_exposure": {
+          "count": 247,
+          "users": 85
         },
         "entry_composite": {
           "count": 122,
@@ -1881,29 +1901,29 @@
         }
       },
       "20260304": {
-        "voice_library_voice_design_click": {
-          "count": 26,
-          "users": 15
-        },
         "creation_voice_design_click": {
           "count": 73,
           "users": 43
-        },
-        "voice_design_save_success": {
-          "count": 69,
-          "users": 26
-        },
-        "page_voice_design_exposure": {
-          "count": 198,
-          "users": 64
         },
         "voice_design_select_click": {
           "count": 69,
           "users": 31
         },
+        "page_voice_design_exposure": {
+          "count": 198,
+          "users": 64
+        },
+        "voice_design_save_success": {
+          "count": 69,
+          "users": 26
+        },
         "voice_design_generate_click": {
           "count": 427,
           "users": 62
+        },
+        "voice_library_voice_design_click": {
+          "count": 26,
+          "users": 15
         },
         "entry_composite": {
           "count": 99,
@@ -1911,29 +1931,29 @@
         }
       },
       "20260305": {
+        "voice_library_voice_design_click": {
+          "count": 20,
+          "users": 13
+        },
         "creation_voice_design_click": {
           "count": 95,
           "users": 59
         },
-        "voice_design_generate_click": {
-          "count": 494,
-          "users": 74
+        "voice_design_save_success": {
+          "count": 27,
+          "users": 22
         },
         "page_voice_design_exposure": {
           "count": 253,
           "users": 80
         },
-        "voice_library_voice_design_click": {
-          "count": 20,
-          "users": 13
+        "voice_design_generate_click": {
+          "count": 494,
+          "users": 74
         },
         "voice_design_select_click": {
           "count": 42,
           "users": 34
-        },
-        "voice_design_save_success": {
-          "count": 27,
-          "users": 22
         },
         "entry_composite": {
           "count": 115,
@@ -1941,8 +1961,16 @@
         }
       },
       "20260306": {
+        "voice_design_select_click": {
+          "count": 5,
+          "users": 4
+        },
+        "voice_design_generate_click": {
+          "count": 40,
+          "users": 6
+        },
         "page_voice_design_exposure": {
-          "count": 23,
+          "count": 25,
           "users": 11
         },
         "voice_design_save_success": {
@@ -1953,14 +1981,6 @@
           "count": 9,
           "users": 7
         },
-        "voice_design_select_click": {
-          "count": 5,
-          "users": 4
-        },
-        "voice_design_generate_click": {
-          "count": 40,
-          "users": 6
-        },
         "entry_composite": {
           "count": 9,
           "users": 7
@@ -1969,29 +1989,29 @@
     },
     "mid": {
       "20260220": {
-        "creation_voice_design_click": {
-          "count": 150,
-          "users": 109
-        },
-        "voice_design_select_click": {
-          "count": 45,
-          "users": 41
-        },
-        "voice_design_generate_click": {
-          "count": 307,
-          "users": 133
+        "voice_design_save_success": {
+          "count": 29,
+          "users": 27
         },
         "voice_library_voice_design_click": {
           "count": 21,
           "users": 16
         },
-        "voice_design_save_success": {
-          "count": 29,
-          "users": 27
-        },
         "page_voice_design_exposure": {
           "count": 280,
           "users": 137
+        },
+        "creation_voice_design_click": {
+          "count": 150,
+          "users": 109
+        },
+        "voice_design_generate_click": {
+          "count": 307,
+          "users": 133
+        },
+        "voice_design_select_click": {
+          "count": 45,
+          "users": 41
         },
         "entry_composite": {
           "count": 171,
@@ -1999,18 +2019,6 @@
         }
       },
       "20260221": {
-        "creation_voice_design_click": {
-          "count": 170,
-          "users": 124
-        },
-        "voice_design_generate_click": {
-          "count": 362,
-          "users": 151
-        },
-        "voice_design_save_success": {
-          "count": 40,
-          "users": 37
-        },
         "voice_design_select_click": {
           "count": 50,
           "users": 47
@@ -2019,9 +2027,21 @@
           "count": 16,
           "users": 12
         },
+        "voice_design_save_success": {
+          "count": 40,
+          "users": 37
+        },
         "page_voice_design_exposure": {
           "count": 278,
           "users": 158
+        },
+        "voice_design_generate_click": {
+          "count": 362,
+          "users": 151
+        },
+        "creation_voice_design_click": {
+          "count": 170,
+          "users": 124
         },
         "entry_composite": {
           "count": 186,
@@ -2029,6 +2049,14 @@
         }
       },
       "20260222": {
+        "page_voice_design_exposure": {
+          "count": 366,
+          "users": 181
+        },
+        "voice_design_save_success": {
+          "count": 42,
+          "users": 40
+        },
         "creation_voice_design_click": {
           "count": 214,
           "users": 155
@@ -2045,43 +2073,35 @@
           "count": 57,
           "users": 51
         },
-        "page_voice_design_exposure": {
-          "count": 366,
-          "users": 181
-        },
-        "voice_design_save_success": {
-          "count": 42,
-          "users": 40
-        },
         "entry_composite": {
           "count": 234,
           "users": 175
         }
       },
       "20260223": {
-        "voice_library_voice_design_click": {
-          "count": 14,
-          "users": 12
+        "page_voice_design_exposure": {
+          "count": 251,
+          "users": 136
         },
         "creation_voice_design_click": {
           "count": 138,
           "users": 108
         },
-        "voice_design_select_click": {
-          "count": 34,
-          "users": 33
-        },
-        "page_voice_design_exposure": {
-          "count": 251,
-          "users": 136
-        },
         "voice_design_generate_click": {
           "count": 317,
           "users": 130
         },
+        "voice_library_voice_design_click": {
+          "count": 14,
+          "users": 12
+        },
         "voice_design_save_success": {
           "count": 20,
           "users": 20
+        },
+        "voice_design_select_click": {
+          "count": 34,
+          "users": 33
         },
         "entry_composite": {
           "count": 152,
@@ -2089,22 +2109,6 @@
         }
       },
       "20260224": {
-        "voice_library_voice_design_click": {
-          "count": 21,
-          "users": 18
-        },
-        "page_voice_design_exposure": {
-          "count": 253,
-          "users": 130
-        },
-        "creation_voice_design_click": {
-          "count": 101,
-          "users": 76
-        },
-        "voice_design_select_click": {
-          "count": 53,
-          "users": 41
-        },
         "voice_design_generate_click": {
           "count": 299,
           "users": 124
@@ -2113,31 +2117,47 @@
           "count": 38,
           "users": 32
         },
+        "creation_voice_design_click": {
+          "count": 101,
+          "users": 76
+        },
+        "page_voice_design_exposure": {
+          "count": 253,
+          "users": 130
+        },
+        "voice_library_voice_design_click": {
+          "count": 21,
+          "users": 18
+        },
+        "voice_design_select_click": {
+          "count": 53,
+          "users": 41
+        },
         "entry_composite": {
           "count": 122,
           "users": 94
         }
       },
       "20260225": {
-        "page_voice_design_exposure": {
-          "count": 227,
-          "users": 100
-        },
-        "voice_design_select_click": {
-          "count": 47,
-          "users": 41
+        "voice_library_voice_design_click": {
+          "count": 15,
+          "users": 13
         },
         "voice_design_save_success": {
           "count": 46,
           "users": 38
         },
+        "voice_design_select_click": {
+          "count": 47,
+          "users": 41
+        },
+        "page_voice_design_exposure": {
+          "count": 227,
+          "users": 100
+        },
         "creation_voice_design_click": {
           "count": 83,
           "users": 57
-        },
-        "voice_library_voice_design_click": {
-          "count": 15,
-          "users": 13
         },
         "voice_design_generate_click": {
           "count": 202,
@@ -2149,29 +2169,29 @@
         }
       },
       "20260226": {
-        "creation_voice_design_click": {
-          "count": 84,
-          "users": 57
+        "voice_design_save_success": {
+          "count": 40,
+          "users": 33
         },
         "page_voice_design_exposure": {
           "count": 205,
           "users": 102
         },
-        "voice_design_select_click": {
-          "count": 42,
-          "users": 36
-        },
         "voice_library_voice_design_click": {
           "count": 25,
           "users": 15
         },
-        "voice_design_save_success": {
-          "count": 40,
-          "users": 33
+        "voice_design_select_click": {
+          "count": 42,
+          "users": 36
         },
         "voice_design_generate_click": {
           "count": 205,
           "users": 88
+        },
+        "creation_voice_design_click": {
+          "count": 84,
+          "users": 57
         },
         "entry_composite": {
           "count": 109,
@@ -2179,29 +2199,29 @@
         }
       },
       "20260227": {
-        "page_voice_design_exposure": {
-          "count": 262,
-          "users": 123
+        "creation_voice_design_click": {
+          "count": 93,
+          "users": 72
         },
         "voice_design_select_click": {
           "count": 59,
           "users": 46
         },
-        "voice_design_generate_click": {
-          "count": 267,
-          "users": 114
+        "voice_design_save_success": {
+          "count": 42,
+          "users": 38
+        },
+        "page_voice_design_exposure": {
+          "count": 262,
+          "users": 123
         },
         "voice_library_voice_design_click": {
           "count": 20,
           "users": 15
         },
-        "creation_voice_design_click": {
-          "count": 93,
-          "users": 72
-        },
-        "voice_design_save_success": {
-          "count": 42,
-          "users": 38
+        "voice_design_generate_click": {
+          "count": 267,
+          "users": 114
         },
         "entry_composite": {
           "count": 113,
@@ -2209,6 +2229,14 @@
         }
       },
       "20260228": {
+        "voice_design_generate_click": {
+          "count": 346,
+          "users": 145
+        },
+        "voice_design_save_success": {
+          "count": 71,
+          "users": 61
+        },
         "voice_library_voice_design_click": {
           "count": 23,
           "users": 18
@@ -2217,21 +2245,13 @@
           "count": 153,
           "users": 115
         },
-        "voice_design_save_success": {
-          "count": 71,
-          "users": 61
-        },
-        "voice_design_generate_click": {
-          "count": 346,
-          "users": 145
+        "voice_design_select_click": {
+          "count": 83,
+          "users": 69
         },
         "page_voice_design_exposure": {
           "count": 309,
           "users": 154
-        },
-        "voice_design_select_click": {
-          "count": 83,
-          "users": 69
         },
         "entry_composite": {
           "count": 176,
@@ -2243,6 +2263,18 @@
           "count": 68,
           "users": 59
         },
+        "voice_design_generate_click": {
+          "count": 362,
+          "users": 151
+        },
+        "page_voice_design_exposure": {
+          "count": 320,
+          "users": 156
+        },
+        "creation_voice_design_click": {
+          "count": 154,
+          "users": 106
+        },
         "voice_design_select_click": {
           "count": 80,
           "users": 70
@@ -2251,24 +2283,20 @@
           "count": 18,
           "users": 14
         },
-        "page_voice_design_exposure": {
-          "count": 320,
-          "users": 156
-        },
-        "voice_design_generate_click": {
-          "count": 362,
-          "users": 151
-        },
-        "creation_voice_design_click": {
-          "count": 154,
-          "users": 106
-        },
         "entry_composite": {
           "count": 172,
           "users": 120
         }
       },
       "20260302": {
+        "voice_library_voice_design_click": {
+          "count": 24,
+          "users": 17
+        },
+        "page_voice_design_exposure": {
+          "count": 358,
+          "users": 150
+        },
         "voice_design_select_click": {
           "count": 73,
           "users": 64
@@ -2277,21 +2305,13 @@
           "count": 329,
           "users": 139
         },
-        "page_voice_design_exposure": {
-          "count": 358,
-          "users": 150
-        },
-        "voice_design_save_success": {
-          "count": 58,
-          "users": 53
-        },
         "creation_voice_design_click": {
           "count": 156,
           "users": 108
         },
-        "voice_library_voice_design_click": {
-          "count": 24,
-          "users": 17
+        "voice_design_save_success": {
+          "count": 58,
+          "users": 53
         },
         "entry_composite": {
           "count": 180,
@@ -2299,6 +2319,18 @@
         }
       },
       "20260303": {
+        "voice_design_select_click": {
+          "count": 78,
+          "users": 64
+        },
+        "creation_voice_design_click": {
+          "count": 168,
+          "users": 116
+        },
+        "page_voice_design_exposure": {
+          "count": 370,
+          "users": 162
+        },
         "voice_design_generate_click": {
           "count": 343,
           "users": 150
@@ -2307,21 +2339,9 @@
           "count": 17,
           "users": 14
         },
-        "page_voice_design_exposure": {
-          "count": 370,
-          "users": 162
-        },
-        "voice_design_select_click": {
-          "count": 78,
-          "users": 64
-        },
         "voice_design_save_success": {
           "count": 53,
           "users": 47
-        },
-        "creation_voice_design_click": {
-          "count": 168,
-          "users": 116
         },
         "entry_composite": {
           "count": 185,
@@ -2333,6 +2353,10 @@
           "count": 147,
           "users": 105
         },
+        "voice_design_save_success": {
+          "count": 58,
+          "users": 50
+        },
         "voice_library_voice_design_click": {
           "count": 19,
           "users": 12
@@ -2341,17 +2365,13 @@
           "count": 325,
           "users": 138
         },
-        "voice_design_save_success": {
-          "count": 58,
-          "users": 50
+        "voice_design_select_click": {
+          "count": 78,
+          "users": 61
         },
         "page_voice_design_exposure": {
           "count": 330,
           "users": 149
-        },
-        "voice_design_select_click": {
-          "count": 78,
-          "users": 61
         },
         "entry_composite": {
           "count": 166,
@@ -2359,13 +2379,17 @@
         }
       },
       "20260305": {
-        "voice_design_save_success": {
-          "count": 59,
-          "users": 56
+        "voice_design_select_click": {
+          "count": 68,
+          "users": 63
         },
         "creation_voice_design_click": {
           "count": 181,
           "users": 127
+        },
+        "voice_design_save_success": {
+          "count": 59,
+          "users": 56
         },
         "voice_library_voice_design_click": {
           "count": 23,
@@ -2374,10 +2398,6 @@
         "page_voice_design_exposure": {
           "count": 345,
           "users": 171
-        },
-        "voice_design_select_click": {
-          "count": 68,
-          "users": 63
         },
         "voice_design_generate_click": {
           "count": 395,
@@ -2389,9 +2409,9 @@
         }
       },
       "20260306": {
-        "voice_design_select_click": {
-          "count": 7,
-          "users": 5
+        "creation_voice_design_click": {
+          "count": 3,
+          "users": 3
         },
         "voice_library_voice_design_click": {
           "count": 1,
@@ -2401,17 +2421,17 @@
           "count": 28,
           "users": 14
         },
-        "voice_design_save_success": {
-          "count": 6,
-          "users": 4
-        },
         "voice_design_generate_click": {
           "count": 20,
           "users": 5
         },
-        "creation_voice_design_click": {
-          "count": 3,
-          "users": 3
+        "voice_design_save_success": {
+          "count": 6,
+          "users": 4
+        },
+        "voice_design_select_click": {
+          "count": 7,
+          "users": 5
         },
         "entry_composite": {
           "count": 4,
@@ -2425,25 +2445,25 @@
           "count": 35,
           "users": 34
         },
-        "voice_design_generate_click": {
-          "count": 141,
-          "users": 140
-        },
-        "creation_voice_design_click": {
-          "count": 139,
-          "users": 113
+        "voice_library_voice_design_click": {
+          "count": 14,
+          "users": 10
         },
         "page_voice_design_exposure": {
           "count": 239,
           "users": 144
         },
+        "voice_design_generate_click": {
+          "count": 141,
+          "users": 140
+        },
         "voice_design_select_click": {
           "count": 45,
           "users": 45
         },
-        "voice_library_voice_design_click": {
-          "count": 14,
-          "users": 10
+        "creation_voice_design_click": {
+          "count": 139,
+          "users": 113
         },
         "entry_composite": {
           "count": 153,
@@ -2451,29 +2471,29 @@
         }
       },
       "20260221": {
-        "page_voice_design_exposure": {
-          "count": 198,
-          "users": 118
+        "voice_design_select_click": {
+          "count": 33,
+          "users": 33
+        },
+        "creation_voice_design_click": {
+          "count": 118,
+          "users": 91
         },
         "voice_design_generate_click": {
           "count": 110,
           "users": 109
         },
-        "voice_library_voice_design_click": {
-          "count": 14,
-          "users": 7
-        },
-        "voice_design_select_click": {
-          "count": 33,
-          "users": 33
-        },
         "voice_design_save_success": {
           "count": 25,
           "users": 25
         },
-        "creation_voice_design_click": {
-          "count": 118,
-          "users": 91
+        "voice_library_voice_design_click": {
+          "count": 14,
+          "users": 7
+        },
+        "page_voice_design_exposure": {
+          "count": 198,
+          "users": 118
         },
         "entry_composite": {
           "count": 132,
@@ -2481,14 +2501,6 @@
         }
       },
       "20260222": {
-        "voice_design_save_success": {
-          "count": 40,
-          "users": 39
-        },
-        "creation_voice_design_click": {
-          "count": 149,
-          "users": 113
-        },
         "page_voice_design_exposure": {
           "count": 221,
           "users": 134
@@ -2496,6 +2508,10 @@
         "voice_design_generate_click": {
           "count": 126,
           "users": 125
+        },
+        "creation_voice_design_click": {
+          "count": 149,
+          "users": 113
         },
         "voice_library_voice_design_click": {
           "count": 8,
@@ -2505,19 +2521,27 @@
           "count": 49,
           "users": 46
         },
+        "voice_design_save_success": {
+          "count": 40,
+          "users": 39
+        },
         "entry_composite": {
           "count": 157,
           "users": 121
         }
       },
       "20260223": {
-        "voice_design_save_success": {
-          "count": 35,
-          "users": 35
+        "creation_voice_design_click": {
+          "count": 102,
+          "users": 84
         },
         "voice_design_generate_click": {
           "count": 104,
           "users": 102
+        },
+        "voice_library_voice_design_click": {
+          "count": 14,
+          "users": 11
         },
         "voice_design_select_click": {
           "count": 44,
@@ -2527,13 +2551,9 @@
           "count": 191,
           "users": 115
         },
-        "voice_library_voice_design_click": {
-          "count": 14,
-          "users": 11
-        },
-        "creation_voice_design_click": {
-          "count": 102,
-          "users": 84
+        "voice_design_save_success": {
+          "count": 35,
+          "users": 35
         },
         "entry_composite": {
           "count": 116,
@@ -2541,6 +2561,10 @@
         }
       },
       "20260224": {
+        "voice_design_generate_click": {
+          "count": 122,
+          "users": 121
+        },
         "voice_design_save_success": {
           "count": 34,
           "users": 34
@@ -2549,21 +2573,17 @@
           "count": 242,
           "users": 129
         },
-        "voice_library_voice_design_click": {
-          "count": 30,
-          "users": 15
-        },
         "creation_voice_design_click": {
           "count": 94,
           "users": 81
         },
+        "voice_library_voice_design_click": {
+          "count": 30,
+          "users": 15
+        },
         "voice_design_select_click": {
           "count": 39,
           "users": 39
-        },
-        "voice_design_generate_click": {
-          "count": 122,
-          "users": 121
         },
         "entry_composite": {
           "count": 124,
@@ -2571,29 +2591,29 @@
         }
       },
       "20260225": {
-        "page_voice_design_exposure": {
-          "count": 302,
-          "users": 178
-        },
-        "voice_library_voice_design_click": {
-          "count": 16,
-          "users": 16
-        },
-        "voice_design_generate_click": {
-          "count": 170,
-          "users": 168
-        },
-        "creation_voice_design_click": {
-          "count": 158,
-          "users": 124
+        "voice_design_save_success": {
+          "count": 70,
+          "users": 64
         },
         "voice_design_select_click": {
           "count": 78,
           "users": 76
         },
-        "voice_design_save_success": {
-          "count": 70,
-          "users": 64
+        "page_voice_design_exposure": {
+          "count": 302,
+          "users": 178
+        },
+        "creation_voice_design_click": {
+          "count": 158,
+          "users": 124
+        },
+        "voice_design_generate_click": {
+          "count": 170,
+          "users": 168
+        },
+        "voice_library_voice_design_click": {
+          "count": 16,
+          "users": 16
         },
         "entry_composite": {
           "count": 174,
@@ -2601,9 +2621,9 @@
         }
       },
       "20260226": {
-        "voice_design_generate_click": {
-          "count": 139,
-          "users": 139
+        "voice_design_save_success": {
+          "count": 57,
+          "users": 56
         },
         "creation_voice_design_click": {
           "count": 123,
@@ -2613,17 +2633,17 @@
           "count": 264,
           "users": 149
         },
-        "voice_design_save_success": {
-          "count": 57,
-          "users": 56
+        "voice_design_select_click": {
+          "count": 70,
+          "users": 67
         },
         "voice_library_voice_design_click": {
           "count": 18,
           "users": 16
         },
-        "voice_design_select_click": {
-          "count": 70,
-          "users": 67
+        "voice_design_generate_click": {
+          "count": 139,
+          "users": 139
         },
         "entry_composite": {
           "count": 141,
@@ -2631,29 +2651,29 @@
         }
       },
       "20260227": {
-        "voice_design_save_success": {
-          "count": 77,
-          "users": 77
-        },
-        "page_voice_design_exposure": {
-          "count": 338,
-          "users": 213
-        },
-        "voice_library_voice_design_click": {
-          "count": 20,
-          "users": 17
-        },
-        "voice_design_generate_click": {
-          "count": 201,
-          "users": 201
+        "voice_design_select_click": {
+          "count": 92,
+          "users": 90
         },
         "creation_voice_design_click": {
           "count": 186,
           "users": 148
         },
-        "voice_design_select_click": {
-          "count": 92,
-          "users": 90
+        "page_voice_design_exposure": {
+          "count": 338,
+          "users": 213
+        },
+        "voice_design_generate_click": {
+          "count": 201,
+          "users": 201
+        },
+        "voice_library_voice_design_click": {
+          "count": 20,
+          "users": 17
+        },
+        "voice_design_save_success": {
+          "count": 77,
+          "users": 77
         },
         "entry_composite": {
           "count": 206,
@@ -2661,29 +2681,29 @@
         }
       },
       "20260228": {
-        "voice_library_voice_design_click": {
-          "count": 24,
-          "users": 20
+        "voice_design_save_success": {
+          "count": 99,
+          "users": 98
         },
         "voice_design_generate_click": {
           "count": 246,
           "users": 244
         },
-        "voice_design_select_click": {
-          "count": 115,
-          "users": 114
-        },
-        "page_voice_design_exposure": {
-          "count": 428,
-          "users": 255
+        "voice_library_voice_design_click": {
+          "count": 24,
+          "users": 20
         },
         "creation_voice_design_click": {
           "count": 250,
           "users": 190
         },
-        "voice_design_save_success": {
-          "count": 99,
-          "users": 98
+        "page_voice_design_exposure": {
+          "count": 428,
+          "users": 255
+        },
+        "voice_design_select_click": {
+          "count": 115,
+          "users": 114
         },
         "entry_composite": {
           "count": 274,
@@ -2691,29 +2711,29 @@
         }
       },
       "20260301": {
-        "creation_voice_design_click": {
-          "count": 208,
-          "users": 176
-        },
-        "voice_library_voice_design_click": {
-          "count": 30,
-          "users": 27
-        },
-        "voice_design_select_click": {
-          "count": 118,
-          "users": 115
-        },
-        "voice_design_generate_click": {
-          "count": 255,
-          "users": 254
+        "page_voice_design_exposure": {
+          "count": 429,
+          "users": 266
         },
         "voice_design_save_success": {
           "count": 99,
           "users": 97
         },
-        "page_voice_design_exposure": {
-          "count": 429,
-          "users": 266
+        "voice_design_select_click": {
+          "count": 118,
+          "users": 115
+        },
+        "voice_library_voice_design_click": {
+          "count": 30,
+          "users": 27
+        },
+        "voice_design_generate_click": {
+          "count": 255,
+          "users": 254
+        },
+        "creation_voice_design_click": {
+          "count": 208,
+          "users": 176
         },
         "entry_composite": {
           "count": 238,
@@ -2721,10 +2741,6 @@
         }
       },
       "20260302": {
-        "page_voice_design_exposure": {
-          "count": 486,
-          "users": 261
-        },
         "voice_library_voice_design_click": {
           "count": 27,
           "users": 23
@@ -2737,13 +2753,17 @@
           "count": 248,
           "users": 247
         },
-        "voice_design_save_success": {
-          "count": 115,
-          "users": 111
+        "page_voice_design_exposure": {
+          "count": 486,
+          "users": 261
         },
         "creation_voice_design_click": {
           "count": 216,
           "users": 183
+        },
+        "voice_design_save_success": {
+          "count": 115,
+          "users": 111
         },
         "entry_composite": {
           "count": 243,
@@ -2751,29 +2771,29 @@
         }
       },
       "20260303": {
-        "creation_voice_design_click": {
-          "count": 213,
-          "users": 179
-        },
-        "page_voice_design_exposure": {
-          "count": 439,
-          "users": 256
-        },
         "voice_design_select_click": {
           "count": 129,
           "users": 123
         },
-        "voice_design_save_success": {
-          "count": 104,
-          "users": 101
+        "voice_design_generate_click": {
+          "count": 243,
+          "users": 243
         },
         "voice_library_voice_design_click": {
           "count": 27,
           "users": 23
         },
-        "voice_design_generate_click": {
-          "count": 243,
-          "users": 243
+        "page_voice_design_exposure": {
+          "count": 439,
+          "users": 256
+        },
+        "voice_design_save_success": {
+          "count": 104,
+          "users": 101
+        },
+        "creation_voice_design_click": {
+          "count": 213,
+          "users": 179
         },
         "entry_composite": {
           "count": 240,
@@ -2784,10 +2804,6 @@
         "voice_design_generate_click": {
           "count": 244,
           "users": 238
-        },
-        "voice_design_save_success": {
-          "count": 100,
-          "users": 99
         },
         "creation_voice_design_click": {
           "count": 212,
@@ -2805,6 +2821,10 @@
           "count": 418,
           "users": 254
         },
+        "voice_design_save_success": {
+          "count": 100,
+          "users": 99
+        },
         "entry_composite": {
           "count": 242,
           "users": 196
@@ -2815,18 +2835,6 @@
           "count": 105,
           "users": 102
         },
-        "page_voice_design_exposure": {
-          "count": 423,
-          "users": 254
-        },
-        "voice_design_generate_click": {
-          "count": 245,
-          "users": 242
-        },
-        "voice_library_voice_design_click": {
-          "count": 19,
-          "users": 18
-        },
         "voice_design_save_success": {
           "count": 91,
           "users": 88
@@ -2835,28 +2843,24 @@
           "count": 209,
           "users": 176
         },
+        "voice_library_voice_design_click": {
+          "count": 19,
+          "users": 18
+        },
+        "page_voice_design_exposure": {
+          "count": 423,
+          "users": 254
+        },
+        "voice_design_generate_click": {
+          "count": 245,
+          "users": 242
+        },
         "entry_composite": {
           "count": 228,
           "users": 194
         }
       },
       "20260306": {
-        "voice_design_save_success": {
-          "count": 2,
-          "users": 2
-        },
-        "creation_voice_design_click": {
-          "count": 6,
-          "users": 6
-        },
-        "voice_library_voice_design_click": {
-          "count": 2,
-          "users": 2
-        },
-        "voice_design_select_click": {
-          "count": 2,
-          "users": 2
-        },
         "page_voice_design_exposure": {
           "count": 20,
           "users": 15
@@ -2864,6 +2868,22 @@
         "voice_design_generate_click": {
           "count": 14,
           "users": 3
+        },
+        "voice_design_select_click": {
+          "count": 2,
+          "users": 2
+        },
+        "voice_library_voice_design_click": {
+          "count": 2,
+          "users": 2
+        },
+        "voice_design_save_success": {
+          "count": 2,
+          "users": 2
+        },
+        "creation_voice_design_click": {
+          "count": 6,
+          "users": 6
         },
         "entry_composite": {
           "count": 8,
@@ -2873,25 +2893,25 @@
     },
     "none": {
       "20260220": {
-        "voice_library_voice_design_click": {
-          "count": 69,
-          "users": 56
-        },
-        "page_voice_design_exposure": {
-          "count": 1029,
-          "users": 750
-        },
-        "voice_design_save_success": {
-          "count": 1,
-          "users": 1
+        "creation_voice_design_click": {
+          "count": 500,
+          "users": 440
         },
         "voice_design_select_click": {
           "count": 1,
           "users": 1
         },
-        "creation_voice_design_click": {
-          "count": 500,
-          "users": 440
+        "voice_design_save_success": {
+          "count": 1,
+          "users": 1
+        },
+        "page_voice_design_exposure": {
+          "count": 1029,
+          "users": 750
+        },
+        "voice_library_voice_design_click": {
+          "count": 69,
+          "users": 56
         },
         "entry_composite": {
           "count": 569,
@@ -2899,21 +2919,21 @@
         }
       },
       "20260221": {
-        "creation_voice_design_click": {
-          "count": 597,
-          "users": 498
-        },
         "voice_design_save_success": {
           "count": 1,
           "users": 1
         },
-        "voice_library_voice_design_click": {
-          "count": 60,
-          "users": 54
+        "creation_voice_design_click": {
+          "count": 597,
+          "users": 498
         },
         "page_voice_design_exposure": {
           "count": 1163,
           "users": 796
+        },
+        "voice_library_voice_design_click": {
+          "count": 60,
+          "users": 54
         },
         "entry_composite": {
           "count": 657,
@@ -2921,10 +2941,6 @@
         }
       },
       "20260222": {
-        "page_voice_design_exposure": {
-          "count": 1266,
-          "users": 834
-        },
         "voice_library_voice_design_click": {
           "count": 70,
           "users": 63
@@ -2933,12 +2949,20 @@
           "count": 639,
           "users": 523
         },
+        "page_voice_design_exposure": {
+          "count": 1266,
+          "users": 834
+        },
         "entry_composite": {
           "count": 709,
           "users": 586
         }
       },
       "20260223": {
+        "page_voice_design_exposure": {
+          "count": 1367,
+          "users": 880
+        },
         "creation_voice_design_click": {
           "count": 600,
           "users": 485
@@ -2946,10 +2970,6 @@
         "voice_library_voice_design_click": {
           "count": 101,
           "users": 88
-        },
-        "page_voice_design_exposure": {
-          "count": 1367,
-          "users": 880
         },
         "entry_composite": {
           "count": 701,
@@ -2961,7 +2981,7 @@
           "count": 602,
           "users": 532
         },
-        "voice_design_save_success": {
+        "voice_design_select_click": {
           "count": 2,
           "users": 2
         },
@@ -2969,13 +2989,13 @@
           "count": 1511,
           "users": 1050
         },
-        "voice_design_select_click": {
-          "count": 2,
-          "users": 2
-        },
         "voice_library_voice_design_click": {
           "count": 89,
           "users": 78
+        },
+        "voice_design_save_success": {
+          "count": 2,
+          "users": 2
         },
         "entry_composite": {
           "count": 691,
@@ -2983,17 +3003,17 @@
         }
       },
       "20260225": {
-        "voice_design_save_success": {
-          "count": 2,
-          "users": 2
+        "creation_voice_design_click": {
+          "count": 606,
+          "users": 524
         },
         "voice_design_select_click": {
           "count": 2,
           "users": 2
         },
-        "creation_voice_design_click": {
-          "count": 606,
-          "users": 524
+        "voice_design_save_success": {
+          "count": 2,
+          "users": 2
         },
         "page_voice_design_exposure": {
           "count": 1628,
@@ -3009,10 +3029,6 @@
         }
       },
       "20260226": {
-        "voice_design_save_success": {
-          "count": 4,
-          "users": 3
-        },
         "voice_design_select_click": {
           "count": 6,
           "users": 6
@@ -3029,20 +3045,16 @@
           "count": 1466,
           "users": 1002
         },
+        "voice_design_save_success": {
+          "count": 4,
+          "users": 3
+        },
         "entry_composite": {
           "count": 721,
           "users": 622
         }
       },
       "20260227": {
-        "creation_voice_design_click": {
-          "count": 613,
-          "users": 539
-        },
-        "voice_design_select_click": {
-          "count": 1,
-          "users": 1
-        },
         "voice_library_voice_design_click": {
           "count": 92,
           "users": 80
@@ -3051,9 +3063,17 @@
           "count": 1533,
           "users": 1047
         },
+        "voice_design_select_click": {
+          "count": 1,
+          "users": 1
+        },
         "voice_design_save_success": {
           "count": 2,
           "users": 2
+        },
+        "creation_voice_design_click": {
+          "count": 613,
+          "users": 539
         },
         "entry_composite": {
           "count": 705,
@@ -3061,9 +3081,13 @@
         }
       },
       "20260228": {
-        "voice_design_save_success": {
-          "count": 1,
-          "users": 1
+        "creation_voice_design_click": {
+          "count": 768,
+          "users": 658
+        },
+        "voice_library_voice_design_click": {
+          "count": 111,
+          "users": 92
         },
         "page_voice_design_exposure": {
           "count": 1770,
@@ -3073,13 +3097,9 @@
           "count": 2,
           "users": 2
         },
-        "creation_voice_design_click": {
-          "count": 768,
-          "users": 658
-        },
-        "voice_library_voice_design_click": {
-          "count": 111,
-          "users": 92
+        "voice_design_save_success": {
+          "count": 1,
+          "users": 1
         },
         "entry_composite": {
           "count": 879,
@@ -3087,10 +3107,6 @@
         }
       },
       "20260301": {
-        "page_voice_design_exposure": {
-          "count": 1518,
-          "users": 1045
-        },
         "voice_library_voice_design_click": {
           "count": 83,
           "users": 78
@@ -3099,31 +3115,35 @@
           "count": 718,
           "users": 609
         },
+        "page_voice_design_exposure": {
+          "count": 1518,
+          "users": 1045
+        },
         "entry_composite": {
           "count": 801,
           "users": 687
         }
       },
       "20260302": {
-        "voice_library_voice_design_click": {
-          "count": 97,
-          "users": 83
+        "page_voice_design_exposure": {
+          "count": 1686,
+          "users": 1149
         },
         "creation_voice_design_click": {
           "count": 712,
           "users": 599
         },
-        "voice_design_select_click": {
-          "count": 3,
-          "users": 3
-        },
         "voice_design_save_success": {
           "count": 2,
           "users": 2
         },
-        "page_voice_design_exposure": {
-          "count": 1686,
-          "users": 1149
+        "voice_design_select_click": {
+          "count": 3,
+          "users": 3
+        },
+        "voice_library_voice_design_click": {
+          "count": 97,
+          "users": 83
         },
         "entry_composite": {
           "count": 809,
@@ -3131,25 +3151,25 @@
         }
       },
       "20260303": {
-        "voice_design_select_click": {
-          "count": 3,
-          "users": 3
-        },
-        "voice_design_save_success": {
-          "count": 4,
-          "users": 4
-        },
-        "creation_voice_design_click": {
-          "count": 682,
-          "users": 598
+        "page_voice_design_exposure": {
+          "count": 1563,
+          "users": 1088
         },
         "voice_library_voice_design_click": {
           "count": 87,
           "users": 70
         },
-        "page_voice_design_exposure": {
-          "count": 1563,
-          "users": 1088
+        "creation_voice_design_click": {
+          "count": 682,
+          "users": 598
+        },
+        "voice_design_save_success": {
+          "count": 4,
+          "users": 4
+        },
+        "voice_design_select_click": {
+          "count": 3,
+          "users": 3
         },
         "entry_composite": {
           "count": 769,
@@ -3157,6 +3177,14 @@
         }
       },
       "20260304": {
+        "voice_library_voice_design_click": {
+          "count": 90,
+          "users": 81
+        },
+        "creation_voice_design_click": {
+          "count": 790,
+          "users": 663
+        },
         "page_voice_design_exposure": {
           "count": 1740,
           "users": 1189
@@ -3169,35 +3197,27 @@
           "count": 1,
           "users": 1
         },
-        "voice_library_voice_design_click": {
-          "count": 90,
-          "users": 81
-        },
-        "creation_voice_design_click": {
-          "count": 790,
-          "users": 663
-        },
         "entry_composite": {
           "count": 880,
           "users": 744
         }
       },
       "20260305": {
-        "page_voice_design_exposure": {
-          "count": 1999,
-          "users": 1355
+        "creation_voice_design_click": {
+          "count": 863,
+          "users": 737
         },
         "voice_library_voice_design_click": {
           "count": 113,
           "users": 97
         },
-        "creation_voice_design_click": {
-          "count": 863,
-          "users": 737
-        },
         "voice_design_save_success": {
           "count": 1,
           "users": 1
+        },
+        "page_voice_design_exposure": {
+          "count": 1999,
+          "users": 1355
         },
         "entry_composite": {
           "count": 976,
@@ -3206,16 +3226,8 @@
       },
       "20260306": {
         "page_voice_design_exposure": {
-          "count": 228,
-          "users": 141
-        },
-        "voice_design_generate_click": {
-          "count": 40,
-          "users": 16
-        },
-        "voice_design_select_click": {
-          "count": 11,
-          "users": 9
+          "count": 234,
+          "users": 143
         },
         "voice_design_save_success": {
           "count": 5,
@@ -3225,13 +3237,21 @@
           "count": 16,
           "users": 12
         },
+        "voice_design_select_click": {
+          "count": 11,
+          "users": 9
+        },
         "creation_voice_design_click": {
-          "count": 47,
-          "users": 43
+          "count": 50,
+          "users": 45
+        },
+        "voice_design_generate_click": {
+          "count": 40,
+          "users": 16
         },
         "entry_composite": {
-          "count": 63,
-          "users": 55
+          "count": 66,
+          "users": 57
         }
       }
     }
@@ -3249,23 +3269,23 @@
         }
       },
       "high": {
-        "voice_design_complete_back": {
-          "count": 1,
-          "users": 1
-        },
         "voice_design_save_voice_use": {
           "count": 24,
           "users": 19
+        },
+        "voice_design_complete_back": {
+          "count": 1,
+          "users": 1
         }
       },
       "mid": {
-        "voice_design_complete_back": {
-          "count": 2,
-          "users": 2
-        },
         "voice_design_save_voice_use": {
           "count": 49,
           "users": 47
+        },
+        "voice_design_complete_back": {
+          "count": 2,
+          "users": 2
         }
       },
       "low": {
@@ -3297,33 +3317,33 @@
         }
       },
       "high": {
-        "voice_design_save_voice_use": {
-          "count": 76,
-          "users": 58
-        },
         "voice_design_complete_back": {
           "count": 2,
           "users": 2
+        },
+        "voice_design_save_voice_use": {
+          "count": 76,
+          "users": 58
         }
       },
       "mid": {
-        "voice_design_save_voice_use": {
-          "count": 135,
-          "users": 126
-        },
         "voice_design_complete_back": {
           "count": 4,
           "users": 4
+        },
+        "voice_design_save_voice_use": {
+          "count": 135,
+          "users": 126
         }
       },
       "low": {
-        "voice_design_save_voice_use": {
-          "count": 251,
-          "users": 249
-        },
         "voice_design_complete_back": {
           "count": 7,
           "users": 6
+        },
+        "voice_design_save_voice_use": {
+          "count": 251,
+          "users": 249
         }
       },
       "none": {
@@ -3335,13 +3355,13 @@
     },
     "近7天": {
       "大盘": {
-        "voice_design_save_voice_use": {
-          "count": 1097,
-          "users": 1012
-        },
         "voice_design_complete_back": {
           "count": 39,
           "users": 36
+        },
+        "voice_design_save_voice_use": {
+          "count": 1097,
+          "users": 1012
         }
       },
       "high": {
@@ -3355,23 +3375,23 @@
         }
       },
       "mid": {
-        "voice_design_complete_back": {
-          "count": 10,
-          "users": 10
-        },
         "voice_design_save_voice_use": {
           "count": 326,
           "users": 296
+        },
+        "voice_design_complete_back": {
+          "count": 10,
+          "users": 10
         }
       },
       "low": {
-        "voice_design_complete_back": {
-          "count": 15,
-          "users": 14
-        },
         "voice_design_save_voice_use": {
           "count": 573,
           "users": 564
+        },
+        "voice_design_complete_back": {
+          "count": 15,
+          "users": 14
         }
       },
       "none": {
@@ -3409,27 +3429,27 @@
     "design_usage_rate": 90.7
   },
   "non_gen_flow": {
-    "total_exposed": 20270,
-    "total_generated": 5762,
-    "non_gen_total": 14508,
-    "non_gen_with_events": 13608,
+    "total_exposed": 20290,
+    "total_generated": 5766,
+    "non_gen_total": 14524,
+    "non_gen_with_events": 13623,
     "step1": [
       {
         "name": "离开Design页",
         "event": "page_voice_design_bounce",
-        "count": 11330,
+        "count": 11343,
         "pct": 83.3,
         "step2": [
           {
             "name": "进入TTS创作页",
             "event": "page_tts_creation_exposure",
-            "count": 5762,
+            "count": 5770,
             "pct": 54.2,
             "step3": [
               {
                 "name": "引导曝光",
                 "event": "guide_exposure",
-                "count": 4810,
+                "count": 4816,
                 "pct": 84.1
               },
               {
@@ -3441,67 +3461,67 @@
               {
                 "name": "其他",
                 "event": "others",
-                "count": 614,
-                "pct": 10.7
+                "count": 616,
+                "pct": 10.8
               }
             ]
           },
           {
             "name": "进入Voice Clone页",
             "event": "page_voice_clone_exposure",
-            "count": 1780,
+            "count": 1785,
             "pct": 16.8,
             "step3": [
               {
                 "name": "添加克隆音色",
                 "event": "voice_clone_add_voice_click",
-                "count": 650,
+                "count": 653,
                 "pct": 38.4
               },
               {
                 "name": "进入音色库",
                 "event": "page_voice_lib_exposure",
-                "count": 392,
+                "count": 393,
                 "pct": 23.1
               },
               {
                 "name": "进入TTS创作页",
                 "event": "page_tts_creation_exposure",
-                "count": 168,
+                "count": 169,
                 "pct": 9.9
               },
               {
                 "name": "其他",
                 "event": "others",
-                "count": 484,
-                "pct": 28.6
+                "count": 485,
+                "pct": 28.5
               }
             ]
           },
           {
             "name": "进入音色库",
             "event": "page_voice_lib_exposure",
-            "count": 1224,
+            "count": 1223,
             "pct": 11.5,
             "step3": [
               {
                 "name": "搜索结果曝光",
                 "event": "voice_search_result_exposure",
-                "count": 1078,
-                "pct": 88.7
+                "count": 1077,
+                "pct": 88.6
               },
               {
                 "name": "其他",
                 "event": "others",
                 "count": 138,
-                "pct": 11.3
+                "pct": 11.4
               }
             ]
           },
           {
             "name": "其他",
             "event": "others",
-            "count": 1859,
+            "count": 1860,
             "pct": 17.5,
             "step3": []
           }
@@ -3510,7 +3530,7 @@
       {
         "name": "其他",
         "event": "others",
-        "count": 2278,
+        "count": 2280,
         "pct": 16.7,
         "step2": []
       }
