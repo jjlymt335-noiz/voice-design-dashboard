@@ -834,19 +834,14 @@
                 return;
             }
 
-            // 恢复漏斗图显示（从 Sankey 切回）
-            const funnelChart = document.getElementById('funnelChart');
-            const funnelDetails = document.getElementById('funnelDetails');
-            funnelChart.style.display = '';
-            funnelChart.style.height = '400px';
-            funnelChart.style.width = '';
-            funnelDetails.style.display = '';
-            const funnelContainer = document.querySelector('.funnel-container');
-            funnelContainer.style.display = 'flex';
-            funnelContainer.style.maxHeight = '';
-            funnelContainer.style.overflowY = '';
+            // 恢复漏斗图显示（从 Sankey 切回）- 清除所有 inline style
+            document.getElementById('funnelChart').removeAttribute('style');
+            document.getElementById('funnelDetails').removeAttribute('style');
+            document.querySelector('.funnel-container').removeAttribute('style');
             const summaryEl = document.getElementById('nonGenFlowSummary');
             if (summaryEl) summaryEl.remove();
+            const oldSankey = echarts.getInstanceByDom(document.getElementById('funnelChart'));
+            if (oldSankey) oldSankey.dispose();
 
             const data = getTieredData(dashboardData.funnel, currentPeriod, currentTier) || {};
 
