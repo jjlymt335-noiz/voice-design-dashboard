@@ -878,8 +878,8 @@
 
             const funnelData = [];
             const detailsHtml = [];
-            let prevUsers = null;
-            let firstUsers = null; // 记录曝光用户数，用于计算整体转化
+            let prevCount = null;
+            let firstCount = null; // 记录曝光次数，用于计算整体转化
 
             steps.forEach((step, index) => {
                 let count, users;
@@ -896,34 +896,34 @@
                     users = data[step.key]?.users || 0;
                 }
 
-                // 记录第一步的用户数
+                // 记录第一步的次数
                 if (index === 0) {
-                    firstUsers = users;
+                    firstCount = count;
                 }
 
                 // 相对上一阶段的转化率
-                const stepRate = prevUsers ? ((users / prevUsers) * 100).toFixed(1) + '%' : '-';
+                const stepRate = prevCount ? ((count / prevCount) * 100).toFixed(1) + '%' : '-';
                 // 相对于曝光的整体转化率
-                const overallRate = (index > 0 && firstUsers) ? ((users / firstUsers) * 100).toFixed(1) + '%' : '-';
+                const overallRate = (index > 0 && firstCount) ? ((count / firstCount) * 100).toFixed(1) + '%' : '-';
 
-                prevUsers = users;
+                prevCount = count;
 
-                funnelData.push({ value: users, name: `Step${step.step} ${step.name}` });
+                funnelData.push({ value: count, name: `Step${step.step} ${step.name}\n${count.toLocaleString()}` });
 
                 // 构建细分信息
                 let detailInfo = '';
                 if (step.key === 'entry') {
                     const creation = data['creation_voice_design_click'] || { count: 0, users: 0 };
                     const library = data['voice_library_voice_design_click'] || { count: 0, users: 0 };
-                    const totalUsers = creation.users + library.users;
+                    const totalCount = creation.count + library.count;
                     detailInfo = `
                         <div class="step-detail-breakdown">
-                            <div>从创作页进入: ${creation.users.toLocaleString()} 人 (${totalUsers ? ((creation.users/totalUsers)*100).toFixed(1) : 0}%)</div>
-                            <div>从音色库进入: ${library.users.toLocaleString()} 人 (${totalUsers ? ((library.users/totalUsers)*100).toFixed(1) : 0}%)</div>
+                            <div>从创作页进入: ${creation.count.toLocaleString()} 次 (${totalCount ? ((creation.count/totalCount)*100).toFixed(1) : 0}%)</div>
+                            <div>从音色库进入: ${library.count.toLocaleString()} 次 (${totalCount ? ((library.count/totalCount)*100).toFixed(1) : 0}%)</div>
                         </div>
                     `;
                 } else if (step.key === 'voice_design_generate_click') {
-                    // 生成行为细分
+                    // 生成行为细分（用户维度）
                     const stepDetails = getTieredData(dashboardData.step_details, currentPeriod, currentTier) || {};
                     const promptDetails = stepDetails.prompt_adjustment || {};
                     const totalGenerate = promptDetails.total_generate_users || users;
@@ -935,7 +935,7 @@
                         </div>
                     `;
                 } else if (step.key === 'voice_design_save_success') {
-                    // 保存行为细分
+                    // 保存行为细分（用户维度）
                     const stepDetails = getTieredData(dashboardData.step_details, currentPeriod, currentTier) || {};
                     const saveDetails = stepDetails.save_adjustment || {};
                     const totalSave = saveDetails.total_save_users || users;
@@ -950,11 +950,11 @@
                 } else if (step.key === 'exit') {
                     const toTTS = data['voice_design_save_voice_use'] || { count: 0, users: 0 };
                     const toLib = data['voice_design_complete_back'] || { count: 0, users: 0 };
-                    const totalUsers = toTTS.users + toLib.users;
+                    const totalCount = toTTS.count + toLib.count;
                     detailInfo = `
                         <div class="step-detail-breakdown">
-                            <div>去 TTS 页面: ${toTTS.users.toLocaleString()} 人 (${totalUsers ? ((toTTS.users/totalUsers)*100).toFixed(1) : 0}%)</div>
-                            <div>回 Library: ${toLib.users.toLocaleString()} 人 (${totalUsers ? ((toLib.users/totalUsers)*100).toFixed(1) : 0}%)</div>
+                            <div>去 TTS 页面: ${toTTS.count.toLocaleString()} 次 (${totalCount ? ((toTTS.count/totalCount)*100).toFixed(1) : 0}%)</div>
+                            <div>回 Library: ${toLib.count.toLocaleString()} 次 (${totalCount ? ((toLib.count/totalCount)*100).toFixed(1) : 0}%)</div>
                         </div>
                     `;
                 }
@@ -970,12 +970,12 @@
                         <div class="step-metrics">
                             <div class="step-metrics-row">
                                 <div class="step-metric-col">
-                                    <div class="step-metric-label">去重用户数</div>
-                                    <div class="step-metric-value users">${users.toLocaleString()}</div>
-                                </div>
-                                <div class="step-metric-col">
                                     <div class="step-metric-label">事件触发次数</div>
                                     <div class="step-metric-value count">${count.toLocaleString()}</div>
+                                </div>
+                                <div class="step-metric-col">
+                                    <div class="step-metric-label">去重用户数</div>
+                                    <div class="step-metric-value users">${users.toLocaleString()}</div>
                                 </div>
                             </div>
                             <div class="step-rate">上步转化 ${stepRate}</div>
@@ -992,7 +992,7 @@
             chart.setOption({
                 tooltip: {
                     trigger: 'item',
-                    formatter: '{b}: {c} 人'
+                    formatter: '{b}'
                 },
                 series: [{
                     type: 'funnel',
@@ -1009,7 +1009,7 @@
                     label: {
                         show: true,
                         position: 'inside',
-                        formatter: '{b}\n{c}',
+                        formatter: '{b}',
                         color: '#fff',
                         fontSize: 12
                     },
