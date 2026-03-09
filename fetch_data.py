@@ -206,50 +206,62 @@ def get_step_details():
             # Prompt 调整
             if tier == '大盘':
                 query_prompt = f"""
-                WITH generate_users AS (
-                    SELECT DISTINCT user_pseudo_id
+                WITH generate_events AS (
+                    SELECT user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*`
                     WHERE {date_condition}
                         AND event_name = 'voice_design_generate_click'
                 ),
-                prompt_users AS (
-                    SELECT DISTINCT user_pseudo_id
+                prompt_events AS (
+                    SELECT user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*`
                     WHERE {date_condition}
                         AND event_name = 'voice_design_prompt_click'
+                ),
+                generate_users AS (
+                    SELECT DISTINCT user_pseudo_id FROM generate_events
+                ),
+                prompt_users AS (
+                    SELECT DISTINCT user_pseudo_id FROM prompt_events
                 )
                 SELECT
                     (SELECT COUNT(*) FROM generate_users) as total_generate_users,
                     (SELECT COUNT(*) FROM prompt_users) as prompt_users,
-                    COUNT(*) as generate_with_prompt
-                FROM generate_users g
-                JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id
+                    (SELECT COUNT(*) FROM generate_users g JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id) as generate_with_prompt,
+                    (SELECT COUNT(*) FROM generate_events) as total_generate_count,
+                    (SELECT COUNT(*) FROM prompt_events) as prompt_count
                 """
             else:
                 query_prompt = f"""
                 WITH {get_user_tier_cte()},
-                generate_users AS (
-                    SELECT DISTINCT e.user_pseudo_id
+                generate_events AS (
+                    SELECT e.user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*` e
                     INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
                     WHERE {date_condition}
                         AND e.event_name = 'voice_design_generate_click'
                         AND ut.tier = '{tier}'
                 ),
-                prompt_users AS (
-                    SELECT DISTINCT e.user_pseudo_id
+                prompt_events AS (
+                    SELECT e.user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*` e
                     INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
                     WHERE {date_condition}
                         AND e.event_name = 'voice_design_prompt_click'
                         AND ut.tier = '{tier}'
+                ),
+                generate_users AS (
+                    SELECT DISTINCT user_pseudo_id FROM generate_events
+                ),
+                prompt_users AS (
+                    SELECT DISTINCT user_pseudo_id FROM prompt_events
                 )
                 SELECT
                     (SELECT COUNT(*) FROM generate_users) as total_generate_users,
                     (SELECT COUNT(*) FROM prompt_users) as prompt_users,
-                    COUNT(*) as generate_with_prompt
-                FROM generate_users g
-                JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id
+                    (SELECT COUNT(*) FROM generate_users g JOIN prompt_users p ON g.user_pseudo_id = p.user_pseudo_id) as generate_with_prompt,
+                    (SELECT COUNT(*) FROM generate_events) as total_generate_count,
+                    (SELECT COUNT(*) FROM prompt_events) as prompt_count
                 """
 
             # 入口分布
@@ -282,60 +294,72 @@ def get_step_details():
             # 保存行为（标签/描述修改）
             if tier == '大盘':
                 query_save = f"""
-                WITH save_users AS (
-                    SELECT DISTINCT user_pseudo_id
+                WITH save_events AS (
+                    SELECT user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*`
                     WHERE {date_condition}
                         AND event_name = 'voice_design_save_success'
                 ),
-                label_users AS (
-                    SELECT DISTINCT user_pseudo_id
+                label_events AS (
+                    SELECT user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*`
                     WHERE {date_condition}
                         AND event_name = 'voice_design_label_adjust'
                 ),
-                desc_users AS (
-                    SELECT DISTINCT user_pseudo_id
+                desc_events AS (
+                    SELECT user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*`
                     WHERE {date_condition}
                         AND event_name = 'voice_design_description_adjust'
-                )
+                ),
+                save_users AS (SELECT DISTINCT user_pseudo_id FROM save_events),
+                label_users AS (SELECT DISTINCT user_pseudo_id FROM label_events),
+                desc_users AS (SELECT DISTINCT user_pseudo_id FROM desc_events)
                 SELECT
                     (SELECT COUNT(*) FROM save_users) as total_save_users,
                     (SELECT COUNT(*) FROM save_users s JOIN label_users l ON s.user_pseudo_id = l.user_pseudo_id) as with_label_adjust,
-                    (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust
+                    (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust,
+                    (SELECT COUNT(*) FROM save_events) as total_save_count,
+                    (SELECT COUNT(*) FROM label_events) as with_label_adjust_count,
+                    (SELECT COUNT(*) FROM desc_events) as with_desc_adjust_count
                 """
             else:
                 query_save = f"""
                 WITH {get_user_tier_cte()},
-                save_users AS (
-                    SELECT DISTINCT e.user_pseudo_id
+                save_events AS (
+                    SELECT e.user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*` e
                     INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
                     WHERE {date_condition}
                         AND e.event_name = 'voice_design_save_success'
                         AND ut.tier = '{tier}'
                 ),
-                label_users AS (
-                    SELECT DISTINCT e.user_pseudo_id
+                label_events AS (
+                    SELECT e.user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*` e
                     INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
                     WHERE {date_condition}
                         AND e.event_name = 'voice_design_label_adjust'
                         AND ut.tier = '{tier}'
                 ),
-                desc_users AS (
-                    SELECT DISTINCT e.user_pseudo_id
+                desc_events AS (
+                    SELECT e.user_pseudo_id
                     FROM `noiz-430406.analytics_510746763.events_intraday_*` e
                     INNER JOIN user_tiers ut ON e.user_pseudo_id = ut.user_pseudo_id
                     WHERE {date_condition}
                         AND e.event_name = 'voice_design_description_adjust'
                         AND ut.tier = '{tier}'
-                )
+                ),
+                save_users AS (SELECT DISTINCT user_pseudo_id FROM save_events),
+                label_users AS (SELECT DISTINCT user_pseudo_id FROM label_events),
+                desc_users AS (SELECT DISTINCT user_pseudo_id FROM desc_events)
                 SELECT
                     (SELECT COUNT(*) FROM save_users) as total_save_users,
                     (SELECT COUNT(*) FROM save_users s JOIN label_users l ON s.user_pseudo_id = l.user_pseudo_id) as with_label_adjust,
-                    (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust
+                    (SELECT COUNT(*) FROM save_users s JOIN desc_users d ON s.user_pseudo_id = d.user_pseudo_id) as with_desc_adjust,
+                    (SELECT COUNT(*) FROM save_events) as total_save_count,
+                    (SELECT COUNT(*) FROM label_events) as with_label_adjust_count,
+                    (SELECT COUNT(*) FROM desc_events) as with_desc_adjust_count
                 """
 
             prompt_data = run_query(query_prompt)

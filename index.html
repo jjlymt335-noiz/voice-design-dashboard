@@ -1170,55 +1170,55 @@
             document.getElementById('entryDetails').innerHTML = `
                 <div class="detail-row">
                     <span class="detail-label">从创作页进入</span>
-                    <span class="detail-value">${creationEntry.users.toLocaleString()} 人 (${totalEntry ? ((creationEntry.count/totalEntry)*100).toFixed(1) : 0}%)</span>
+                    <span class="detail-value">${creationEntry.count.toLocaleString()} 次 (${totalEntry ? ((creationEntry.count/totalEntry)*100).toFixed(1) : 0}%)</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">从音色库进入</span>
-                    <span class="detail-value">${libraryEntry.users.toLocaleString()} 人 (${totalEntry ? ((libraryEntry.count/totalEntry)*100).toFixed(1) : 0}%)</span>
+                    <span class="detail-value">${libraryEntry.count.toLocaleString()} 次 (${totalEntry ? ((libraryEntry.count/totalEntry)*100).toFixed(1) : 0}%)</span>
                 </div>
             `;
 
             // 生成行为
             const prompt = details.prompt_adjustment || {};
-            const promptRate = prompt.total_generate_users ? ((prompt.generate_with_prompt / prompt.total_generate_users) * 100).toFixed(1) : 0;
+            const promptRate = prompt.total_generate_count ? ((prompt.prompt_count / prompt.total_generate_count) * 100).toFixed(1) : 0;
             document.getElementById('generateDetails').innerHTML = `
                 <div class="detail-row">
-                    <span class="detail-label">调整过 Prompt 的用户</span>
-                    <span class="detail-value">${prompt.prompt_users?.toLocaleString() || 0} 人</span>
+                    <span class="detail-label">调整过 Prompt 的次数</span>
+                    <span class="detail-value">${(prompt.prompt_count || 0).toLocaleString()} 次</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">生成用户中调整过 Prompt</span>
+                    <span class="detail-label">生成中调整过 Prompt</span>
                     <span class="detail-value">${promptRate}%</span>
                 </div>
             `;
 
             // 保存行为
             const save = details.save_adjustment || {};
-            const labelRate = save.total_save_users ? ((save.with_label_adjust / save.total_save_users) * 100).toFixed(1) : 0;
-            const descRate = save.total_save_users ? ((save.with_desc_adjust / save.total_save_users) * 100).toFixed(1) : 0;
+            const labelRate = save.total_save_count ? ((save.with_label_adjust_count / save.total_save_count) * 100).toFixed(1) : 0;
+            const descRate = save.total_save_count ? ((save.with_desc_adjust_count / save.total_save_count) * 100).toFixed(1) : 0;
             document.getElementById('saveDetails').innerHTML = `
                 <div class="detail-row">
-                    <span class="detail-label">修改过标签的用户</span>
-                    <span class="detail-value">${save.with_label_adjust?.toLocaleString() || 0} 人 (${labelRate}%)</span>
+                    <span class="detail-label">修改过标签的次数</span>
+                    <span class="detail-value">${(save.with_label_adjust_count || 0).toLocaleString()} 次 (${labelRate}%)</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">修改过描述的用户</span>
-                    <span class="detail-value">${save.with_desc_adjust?.toLocaleString() || 0} 人 (${descRate}%)</span>
+                    <span class="detail-label">修改过描述的次数</span>
+                    <span class="detail-value">${(save.with_desc_adjust_count || 0).toLocaleString()} 次 (${descRate}%)</span>
                 </div>
             `;
 
             // 离开去向
             const toTTS = exitData['voice_design_save_voice_use'] || { count: 0, users: 0 };
             const toLib = exitData['voice_design_complete_back'] || { count: 0, users: 0 };
-            const totalExit = toTTS.users + toLib.users;
+            const totalExit = toTTS.count + toLib.count;
             document.getElementById('exitDetails').innerHTML = `
                 <div class="detail-row">
                     <span class="detail-label">去 TTS 页面</span>
-                    <span class="detail-value">${toTTS.users.toLocaleString()} 人 (${totalExit ? ((toTTS.users/totalExit)*100).toFixed(1) : 0}%)</span>
+                    <span class="detail-value">${toTTS.count.toLocaleString()} 次 (${totalExit ? ((toTTS.count/totalExit)*100).toFixed(1) : 0}%)</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">回 Library</span>
-                    <span class="detail-value">${toLib.users.toLocaleString()} 人 (${totalExit ? ((toLib.users/totalExit)*100).toFixed(1) : 0}%)</span>
+                    <span class="detail-value">${toLib.count.toLocaleString()} 次 (${totalExit ? ((toLib.count/totalExit)*100).toFixed(1) : 0}%)</span>
                 </div>
             `;
         }
