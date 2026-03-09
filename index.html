@@ -1406,11 +1406,11 @@
             // 计算比例数据
             const getSeriesData = (s) => {
                 if (trendViewMode === 'absolute') {
-                    return dates.map(d => trend[d]?.[s.key]?.users || 0);
+                    return dates.map(d => trend[d]?.[s.key]?.count || 0);
                 } else {
                     return dates.map(d => {
-                        const exposure = trend[d]?.['page_voice_design_exposure']?.users || 1;
-                        const value = trend[d]?.[s.key]?.users || 0;
+                        const exposure = trend[d]?.['page_voice_design_exposure']?.count || 1;
+                        const value = trend[d]?.[s.key]?.count || 0;
                         return parseFloat(((value / exposure) * 100).toFixed(1));
                     });
                 }
@@ -1427,13 +1427,13 @@
                     formatter: function(params) {
                         const date = params[0].axisValue;
                         const dateKey = dates[params[0].dataIndex];
-                        const exposureUsers = trend[dateKey]?.['page_voice_design_exposure']?.users || 1;
+                        const exposureCount = trend[dateKey]?.['page_voice_design_exposure']?.count || 1;
 
                         let html = `<div style="font-weight: bold; margin-bottom: 8px;">${date}</div>`;
                         if (trendViewMode === 'absolute') {
                             params.forEach(p => {
                                 const value = p.value;
-                                const rate = p.seriesName === '曝光' ? '-' : ((value / exposureUsers) * 100).toFixed(1) + '%';
+                                const rate = p.seriesName === '曝光' ? '-' : ((value / exposureCount) * 100).toFixed(1) + '%';
                                 html += `<div style="display: flex; justify-content: space-between; gap: 20px;">
                                     <span>${p.marker} ${p.seriesName}</span>
                                     <span><b>${value.toLocaleString()}</b> <span style="color: #a0aec0; font-size: 11px;">(${rate})</span></span>
@@ -1442,10 +1442,10 @@
                         } else {
                             params.forEach(p => {
                                 const pctValue = p.value;
-                                const absValue = trend[dateKey]?.[series.find(s => s.name === p.seriesName)?.key]?.users || 0;
+                                const absValue = trend[dateKey]?.[series.find(s => s.name === p.seriesName)?.key]?.count || 0;
                                 html += `<div style="display: flex; justify-content: space-between; gap: 20px;">
                                     <span>${p.marker} ${p.seriesName}</span>
-                                    <span><b>${pctValue}%</b> <span style="color: #a0aec0; font-size: 11px;">(${absValue.toLocaleString()}人)</span></span>
+                                    <span><b>${pctValue}%</b> <span style="color: #a0aec0; font-size: 11px;">(${absValue.toLocaleString()}次)</span></span>
                                 </div>`;
                             });
                         }
