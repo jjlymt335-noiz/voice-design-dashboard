@@ -20,12 +20,12 @@ def run_query(query):
     return [dict(row) for row in result]
 
 def get_funnel_data(date_condition):
-    """获取漏斗数据"""
+    """获取漏斗数据（按次数）"""
     query = f"""
     WITH funnel AS (
         SELECT
             event_name,
-            COUNT(DISTINCT user_pseudo_id) as users
+            COUNT(*) as count
         FROM `noiz-430406.analytics_510746763.events_intraday_*`
         WHERE {date_condition}
             AND event_name IN (
@@ -39,17 +39,17 @@ def get_funnel_data(date_condition):
         GROUP BY event_name
     ),
     entry AS (
-        SELECT COUNT(DISTINCT user_pseudo_id) as users
+        SELECT COUNT(*) as count
         FROM `noiz-430406.analytics_510746763.events_intraday_*`
         WHERE {date_condition}
             AND event_name IN ('creation_voice_design_click', 'voice_library_voice_design_click')
     )
     SELECT
-        (SELECT users FROM funnel WHERE event_name = 'page_voice_design_exposure') as exposure,
-        (SELECT users FROM entry) as entry,
-        (SELECT users FROM funnel WHERE event_name = 'voice_design_generate_click') as generate,
-        (SELECT users FROM funnel WHERE event_name = 'voice_design_select_click') as select_voice,
-        (SELECT users FROM funnel WHERE event_name = 'voice_design_save_success') as save
+        (SELECT count FROM funnel WHERE event_name = 'page_voice_design_exposure') as exposure,
+        (SELECT count FROM entry) as entry,
+        (SELECT count FROM funnel WHERE event_name = 'voice_design_generate_click') as generate,
+        (SELECT count FROM funnel WHERE event_name = 'voice_design_select_click') as select_voice,
+        (SELECT count FROM funnel WHERE event_name = 'voice_design_save_success') as save
     """
     rows = run_query(query)
     if rows:
@@ -63,7 +63,7 @@ def get_funnel_data(date_condition):
     return {'曝光': 0, '进入创编页': 0, '生成音色': 0, '选择音色': 0, '保存音色': 0}
 
 def get_funnel_data_with_history(date_condition):
-    """获取有历史生成记录用户的漏斗数据"""
+    """获取有历史生成记录用户的漏斗数据（按次数）"""
     query = f"""
     WITH users_with_history AS (
         -- 近14天有过generate行为的用户
@@ -76,7 +76,7 @@ def get_funnel_data_with_history(date_condition):
     funnel AS (
         SELECT
             event_name,
-            COUNT(DISTINCT e.user_pseudo_id) as users
+            COUNT(*) as count
         FROM `noiz-430406.analytics_510746763.events_intraday_*` e
         INNER JOIN users_with_history u ON e.user_pseudo_id = u.user_pseudo_id
         WHERE {date_condition}
@@ -91,18 +91,18 @@ def get_funnel_data_with_history(date_condition):
         GROUP BY event_name
     ),
     entry AS (
-        SELECT COUNT(DISTINCT e.user_pseudo_id) as users
+        SELECT COUNT(*) as count
         FROM `noiz-430406.analytics_510746763.events_intraday_*` e
         INNER JOIN users_with_history u ON e.user_pseudo_id = u.user_pseudo_id
         WHERE {date_condition}
             AND event_name IN ('creation_voice_design_click', 'voice_library_voice_design_click')
     )
     SELECT
-        (SELECT users FROM funnel WHERE event_name = 'page_voice_design_exposure') as exposure,
-        (SELECT users FROM entry) as entry,
-        (SELECT users FROM funnel WHERE event_name = 'voice_design_generate_click') as generate,
-        (SELECT users FROM funnel WHERE event_name = 'voice_design_select_click') as select_voice,
-        (SELECT users FROM funnel WHERE event_name = 'voice_design_save_success') as save
+        (SELECT count FROM funnel WHERE event_name = 'page_voice_design_exposure') as exposure,
+        (SELECT count FROM entry) as entry,
+        (SELECT count FROM funnel WHERE event_name = 'voice_design_generate_click') as generate,
+        (SELECT count FROM funnel WHERE event_name = 'voice_design_select_click') as select_voice,
+        (SELECT count FROM funnel WHERE event_name = 'voice_design_save_success') as save
     """
     rows = run_query(query)
     if rows:
@@ -155,20 +155,20 @@ def build_lark_card(today_data, yesterday_data, history_data):
 
     content = f"""**大盘漏斗（昨日）**
 
-**曝光** {exp:,}人 (DoD {delta_str(exp, p_exp)})
+**曝光** {exp:,}次 (DoD {delta_str(exp, p_exp)})
   ↓ {pct(entry, exp)}
-**进入创编页** {entry:,}人 (DoD {delta_str(entry, p_entry)})
+**进入创编页** {entry:,}次 (DoD {delta_str(entry, p_entry)})
   ↓ {pct(gen, entry)}
-**生成音色** {gen:,}人 (DoD {delta_str(gen, p_gen)})
+**生成音色** {gen:,}次 (DoD {delta_str(gen, p_gen)})
   ↓ {pct(sel, gen)}
-**选择音色** {sel:,}人 (DoD {delta_str(sel, p_sel)})
+**选择音色** {sel:,}次 (DoD {delta_str(sel, p_sel)})
   ↓ {pct(save, sel)}
-**保存音色** {save:,}人 (DoD {delta_str(save, p_save)})
+**保存音色** {save:,}次 (DoD {delta_str(save, p_save)})
 
 ---
 **整体转化率（曝光→保存）**
-- 大盘: **{pct(save, exp)}** ({exp:,}人曝光)
-- 有生成历史用户: **{pct(h_save, h_exp)}** ({h_exp:,}人曝光)"""
+- 大盘: **{pct(save, exp)}** ({exp:,}次曝光)
+- 有生成历史用户: **{pct(h_save, h_exp)}** ({h_exp:,}次曝光)"""
 
     card = {
         "msg_type": "interactive",
