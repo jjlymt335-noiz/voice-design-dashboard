@@ -604,64 +604,75 @@ def _query_design_voice_snapshot(end_date_condition):
 def get_tts_adoption_data():
     """获取 TTS 采纳率数据 - 保存 design 音色后 10 分钟内是否使用 TTS
 
-    使用 analysis_tmp.design 表 + tts_generate_click 事件
-    voice_id 从 2026-02-25 起可靠
+    纯 GA4 事件方案（不依赖 analysis_tmp.design 表）：
+    - save 事件: voice_design_save_success (无 voice_id，用 user_pseudo_id + timestamp)
+    - tts 事件: tts_generate_click (有 voice_id, from 参数)
+    - 判断 design 音色使用: tts from='/voice/design'
     """
     query = """
-    WITH design_saves AS (
-        SELECT voice_id, user_id, create_ts
-        FROM `noiz-430406.analysis_tmp.design`
-        WHERE DATE(create_ts) >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+    WITH save_events AS (
+        SELECT
+            user_pseudo_id,
+            TIMESTAMP_MICROS(event_timestamp) as save_ts
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+            AND event_name = 'voice_design_save_success'
+        UNION ALL
+        SELECT
+            user_pseudo_id,
+            TIMESTAMP_MICROS(event_timestamp) as save_ts
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name = 'voice_design_save_success'
     ),
     tts_events AS (
         SELECT
-            user_id,
-            TIMESTAMP_MICROS(event_timestamp) as event_ts,
-            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'voice_id') as voice_id
+            user_pseudo_id,
+            TIMESTAMP_MICROS(event_timestamp) as tts_ts,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from') as from_path
         FROM `noiz-430406.analytics_510746763.events_intraday_*`
         WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
             AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
             AND event_name = 'tts_generate_click'
-            AND user_id IS NOT NULL
         UNION ALL
         SELECT
-            user_id,
-            TIMESTAMP_MICROS(event_timestamp) as event_ts,
-            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'voice_id') as voice_id
+            user_pseudo_id,
+            TIMESTAMP_MICROS(event_timestamp) as tts_ts,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from') as from_path
         FROM `noiz-430406.analytics_510746763.events_*`
         WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
             AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
             AND event_name = 'tts_generate_click'
-            AND user_id IS NOT NULL
     ),
     joined AS (
         SELECT
-            d.voice_id as design_voice_id,
-            d.user_id,
-            d.create_ts,
-            t.voice_id as tts_voice_id,
-            t.event_ts,
-            CASE WHEN d.voice_id = t.voice_id THEN 1 ELSE 0 END as is_design_voice
-        FROM design_saves d
-        JOIN tts_events t ON CAST(d.user_id AS STRING) = t.user_id
-        WHERE t.event_ts BETWEEN d.create_ts AND TIMESTAMP_ADD(d.create_ts, INTERVAL 10 MINUTE)
+            s.user_pseudo_id,
+            s.save_ts,
+            t.tts_ts,
+            t.from_path,
+            CASE WHEN t.from_path = '/voice/design' THEN 1 ELSE 0 END as is_design_tts
+        FROM save_events s
+        JOIN tts_events t ON s.user_pseudo_id = t.user_pseudo_id
+        WHERE t.tts_ts BETWEEN s.save_ts AND TIMESTAMP_ADD(s.save_ts, INTERVAL 10 MINUTE)
     ),
     saves_with_tts AS (
-        SELECT DISTINCT design_voice_id, user_id, create_ts
+        SELECT DISTINCT user_pseudo_id, save_ts
         FROM joined
     ),
     saves_with_design_tts AS (
-        SELECT DISTINCT design_voice_id, user_id, create_ts
+        SELECT DISTINCT user_pseudo_id, save_ts
         FROM joined
-        WHERE is_design_voice = 1
+        WHERE is_design_tts = 1
     )
     SELECT
-        (SELECT COUNT(*) FROM design_saves) as total_save_events,
+        (SELECT COUNT(*) FROM save_events) as total_save_events,
         (SELECT COUNT(*) FROM saves_with_tts) as saves_with_any_tts,
         (SELECT COUNT(*) FROM saves_with_design_tts) as saves_with_design_tts,
         COUNT(*) as total_tts_10m,
-        SUM(is_design_voice) as design_voice_tts_10m,
-        SUM(1 - is_design_voice) as switch_tts_10m
+        SUM(is_design_tts) as design_voice_tts_10m,
+        SUM(1 - is_design_tts) as switch_tts_10m
     FROM joined
     """
 
