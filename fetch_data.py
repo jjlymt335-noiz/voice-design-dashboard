@@ -497,8 +497,8 @@ def get_credit_data():
             SELECT event_params
             FROM `noiz-430406.analytics_510746763.events_intraday_*`
             WHERE event_name = 'credit_reduce'
-                AND _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {start_interval} DAY))
-                AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL {end_interval} DAY))
+                AND _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                AND {end_interval} = 0
         ),
         base AS (
             SELECT
@@ -614,17 +614,16 @@ def get_tts_adoption_data():
         SELECT
             user_pseudo_id,
             TIMESTAMP_MICROS(event_timestamp) as save_ts
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        FROM `noiz-430406.analytics_510746763.events_*`
         WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
-            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
             AND event_name = 'voice_design_save_success'
         UNION ALL
         SELECT
             user_pseudo_id,
             TIMESTAMP_MICROS(event_timestamp) as save_ts
-        FROM `noiz-430406.analytics_510746763.events_*`
-        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
-            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
             AND event_name = 'voice_design_save_success'
     ),
     tts_events AS (
@@ -632,18 +631,17 @@ def get_tts_adoption_data():
             user_pseudo_id,
             TIMESTAMP_MICROS(event_timestamp) as tts_ts,
             (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from') as from_path
-        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        FROM `noiz-430406.analytics_510746763.events_*`
         WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
-            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
             AND event_name = 'tts_generate_click'
         UNION ALL
         SELECT
             user_pseudo_id,
             TIMESTAMP_MICROS(event_timestamp) as tts_ts,
             (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from') as from_path
-        FROM `noiz-430406.analytics_510746763.events_*`
-        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
-            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
             AND event_name = 'tts_generate_click'
     ),
     joined AS (
@@ -756,8 +754,7 @@ def get_non_gen_flow_data():
         UNION ALL
         SELECT user_pseudo_id, event_name, event_timestamp
         FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-          AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+        WHERE _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
     ),
     design_exposures AS (
         SELECT user_pseudo_id, MIN(event_timestamp) as exposure_ts
@@ -817,8 +814,7 @@ def get_non_gen_flow_data():
         UNION ALL
         SELECT user_pseudo_id, event_name
         FROM `noiz-430406.analytics_510746763.events_intraday_*`
-        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-          AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+        WHERE _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
           AND event_name IN ('page_voice_design_exposure', 'voice_design_generate_click')
     )
     SELECT
@@ -1089,15 +1085,14 @@ def get_trend_data():
             query = f"""
             WITH combined AS (
                 SELECT user_pseudo_id, event_name, event_date
-                FROM `noiz-430406.analytics_510746763.events_intraday_*`
-                WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-                    AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
-                    AND event_name IN ({event_list})
-                UNION ALL
-                SELECT user_pseudo_id, event_name, event_date
                 FROM `noiz-430406.analytics_510746763.events_*`
                 WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
                     AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                    AND event_name IN ({event_list})
+                UNION ALL
+                SELECT user_pseudo_id, event_name, event_date
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
                     AND event_name IN ({event_list})
             )
             SELECT
@@ -1115,15 +1110,14 @@ def get_trend_data():
             WITH {get_user_tier_cte()},
             combined AS (
                 SELECT user_pseudo_id, event_name, event_date
-                FROM `noiz-430406.analytics_510746763.events_intraday_*`
-                WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-                    AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
-                    AND event_name IN ({event_list})
-                UNION ALL
-                SELECT user_pseudo_id, event_name, event_date
                 FROM `noiz-430406.analytics_510746763.events_*`
                 WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
                     AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+                    AND event_name IN ({event_list})
+                UNION ALL
+                SELECT user_pseudo_id, event_name, event_date
+                FROM `noiz-430406.analytics_510746763.events_intraday_*`
+                WHERE _TABLE_SUFFIX = FORMAT_DATE("%Y%m%d", CURRENT_DATE())
                     AND event_name IN ({event_list})
             )
             SELECT
