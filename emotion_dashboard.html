@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情绪标签分析看板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif; background: #f5f6fa; color: #2d3436; padding: 32px; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 24px; }
+  .def-box { background: #fff; border-left: 3px solid #6384ff; border-radius: 6px; padding: 16px 20px; margin-bottom: 24px; font-size: 12.5px; color: #555; line-height: 2; }
+  .def-box b { color: #333; }
+  .def-box code { background: #f0f1ff; padding: 2px 6px; border-radius: 3px; font-size: 11.5px; color: #5b6abf; }
+  .section { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .section-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .section-desc { font-size: 12px; color: #999; margin-bottom: 16px; line-height: 1.6; }
+  .row { margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<h1>情绪标签使用与下载分析</h1>
+<p class="subtitle">数据表：noiz-430406.public.gen_products ｜ 查询时间：2026-03-02 00:00 ~ 2026-03-09 24:00 (UTC) ｜ 已排除 deleted_at 非空记录 ｜ 总记录数：628,081</p>
+
+<div class="def-box">
+  <b>口径定义</b><br>
+  <b>使用量</b>：在 target_text 中包含该情绪标签的 <b>去重生成数</b>（COUNT DISTINCT gen_product_id）<br>
+  <b>下载率</b>：<code>COUNT(DISTINCT IF(is_downloaded, gen_product_id, NULL)) / COUNT(DISTINCT gen_product_id)</code><br>
+  <b>Emoji 情绪</b>（4 种）：格式 <code>[😨 #Fear:7]:</code>，单一基础情绪，由 emoji 表情标记<br>
+  <b>文本情绪</b>（8 种预设）：格式 <code>[surprise#Fear:2;Anger:3;Happy:4]:</code>，由多个基础情绪按权重混合而成，仅统计系统预设的 8 种：surprise / excited / dramatic / proud / empathetic / curious / frustrated / envious
+</div>
+
+<div class="row">
+  <div class="section">
+    <div class="section-title">Figure 1 — Emoji 情绪（4 种）· 近 7 天</div>
+    <div class="section-desc">柱状 = 使用量（左轴） ｜ 红点折线 = 下载率（右轴）</div>
+    <div style="max-width:700px;margin:0 auto;"><canvas id="chartEmoji" height="260"></canvas></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="section">
+    <div class="section-title">Figure 2 — 文本情绪（8 种预设）· 近 7 天</div>
+    <div class="section-desc">柱状 = 使用量（左轴） ｜ 红点折线 = 下载率（右轴）</div>
+    <canvas id="chartText" height="280"></canvas>
+  </div>
+</div>
+
+<div class="row">
+  <div class="section">
+    <div class="section-title">Figure 3 — 全部 12 种情绪下载率对比 · 近 7 天</div>
+    <div class="section-desc">横轴 = 下载率，括号内为使用量。橙色 = Emoji，绿 ≥ 20%，蓝 15-20%，灰 &lt; 15%</div>
+    <div style="max-width:800px;margin:0 auto;"><canvas id="chartAll" height="320"></canvas></div>
+  </div>
+</div>
+
+<div style="margin-top:8px; font-size:11px; color:#bbb; text-align:center;">
+  Generated 2026-03-09
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+const EMOJI = {
+  labels: ['Happy\n快乐', 'Anger\n愤怒', 'Sadness\n悲伤', 'Fear\n恐惧'],
+  usage:  [25165, 7983, 5367, 3971],
+  rate:   [16.6, 23.5, 18.0, 20.8]
+};
+
+const TEXT = {
+  labels: ['surprise\n惊讶','excited\n兴奋','dramatic\n夸张','proud\n得意','empathetic\n同理心','curious\n好奇','frustrated\n挫败','envious\n嫉妒'],
+  usage:  [5994, 5082, 2600, 2171, 1841, 1684, 1558, 402],
+  rate:   [18.3, 20.5, 19.9, 21.8, 17.3, 19.6, 20.9, 14.7]
+};
+
+const ALL = [
+  {l:'Anger 愤怒',     u:7983, r:23.5, type:'emoji'},
+  {l:'proud 得意',      u:2171, r:21.8, type:'text'},
+  {l:'frustrated 挫败', u:1558, r:20.9, type:'text'},
+  {l:'Fear 恐惧',      u:3971, r:20.8, type:'emoji'},
+  {l:'excited 兴奋',    u:5082, r:20.5, type:'text'},
+  {l:'dramatic 夸张',   u:2600, r:19.9, type:'text'},
+  {l:'curious 好奇',    u:1684, r:19.6, type:'text'},
+  {l:'surprise 惊讶',   u:5994, r:18.3, type:'text'},
+  {l:'Sadness 悲伤',   u:5367, r:18.0, type:'emoji'},
+  {l:'empathetic 同理心',u:1841,r:17.3, type:'text'},
+  {l:'Happy 快乐',     u:25165,r:16.6, type:'emoji'},
+  {l:'envious 嫉妒',    u:402, r:14.7, type:'text'}
+];
+
+const C = {
+  emojiBar: 'rgba(255,159,67,0.7)',
+  emojiBorder: 'rgba(255,159,67,1)',
+  textBar: 'rgba(99,132,255,0.7)',
+  textBorder: 'rgba(99,132,255,1)',
+  line: '#ff6b6b',
+  rateColor: r => r >= 20 ? 'rgba(46,204,113,0.8)' : r >= 15 ? 'rgba(99,132,255,0.7)' : 'rgba(189,195,199,0.75)'
+};
+
+function makeDualChart(canvasId, data, barColor, barBorder) {
+  return new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: '使用量',
+          data: data.usage,
+          backgroundColor: barColor,
+          borderColor: barBorder,
+          borderWidth: 1,
+          borderRadius: 4,
+          yAxisID: 'y',
+          order: 2,
+          datalabels: { display: false }
+        },
+        {
+          label: '下载率 %',
+          data: data.rate,
+          type: 'line',
+          borderColor: C.line,
+          backgroundColor: C.line,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+          tension: 0.3,
+          yAxisID: 'y1',
+          order: 1,
+          datalabels: {
+            align: 'top',
+            color: '#e74c3c',
+            font: { size: 10, weight: 'bold' },
+            formatter: v => v + '%'
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, font: { size: 10 } } },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + (ctx.dataset.type === 'line' ? ctx.raw + '%' : ctx.raw.toLocaleString()) } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 0 } },
+        y: { position: 'left', title: { display: true, text: '使用量', font: { size: 10 } }, grid: { color: '#f0f0f0' }, ticks: { font: { size: 9 } } },
+        y1: { position: 'right', title: { display: true, text: '下载率 %', font: { size: 10 } }, min: 0, max: 30, grid: { drawOnChartArea: false }, ticks: { font: { size: 9 } } }
+      }
+    }
+  });
+}
+
+makeDualChart('chartEmoji', EMOJI, C.emojiBar, C.emojiBorder);
+makeDualChart('chartText', TEXT, C.textBar, C.textBorder);
+
+// Chart 3: Horizontal bar - all 12
+new Chart(document.getElementById('chartAll'), {
+  type: 'bar',
+  data: {
+    labels: ALL.map(d => d.l + ' (' + d.u.toLocaleString() + ')'),
+    datasets: [{
+      label: '下载率 %',
+      data: ALL.map(d => d.r),
+      backgroundColor: ALL.map(d => d.type === 'emoji' ? 'rgba(255,159,67,0.75)' : C.rateColor(d.r)),
+      borderColor: ALL.map(d => d.type === 'emoji' ? 'rgba(255,159,67,1)' : 'transparent'),
+      borderWidth: ALL.map(d => d.type === 'emoji' ? 1.5 : 0),
+      borderRadius: 4,
+      datalabels: {
+        anchor: 'end',
+        align: 'right',
+        color: '#555',
+        font: { size: 10, weight: '600' },
+        formatter: v => v + '%'
+      }
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => '下载率: ' + ctx.raw + '%  |  使用量: ' + ALL[ctx.dataIndex].u.toLocaleString() + '  |  类型: ' + (ALL[ctx.dataIndex].type === 'emoji' ? 'Emoji情绪' : '文本情绪') } }
+    },
+    scales: {
+      x: { title: { display: true, text: '下载率 %', font: { size: 10 } }, min: 0, max: 28, grid: { color: '#f0f0f0' }, ticks: { font: { size: 9 } } },
+      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+</script>
+</body>
+</html>
