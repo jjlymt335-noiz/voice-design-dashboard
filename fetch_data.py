@@ -1249,6 +1249,150 @@ def get_exit_distribution():
 
     return results
 
+
+# Template ID → 语言映射
+TEMPLATE_LANG = {}
+CN_TEMPLATES = ['午夜电台', '创世女神', '外星来客', '财经博主', '营销号解说', '人工智能', '鸡血带货', '悲伤诉说', '胡同老大爷', '激动的包子', '数学老师', '猫猫网红']
+EN_TEMPLATES = ['Sorrow American Narrator', 'Cat Influencer', 'Elegant British Narrator', 'Goddess of Creation', 'Soft ASMR Mindfulness', 'The Dark Commander', 'Youtube Indian Teacher', 'Alien', 'Silicon Valley Prodigy', 'Energy Comms', 'AI Robotic Engine', 'Speaking Hamburger']
+JP_TEMPLATES = ['長官', '創世の女神', '宇宙人', '激烈な論争', '華麗なる悪役', '人工知能', '優雅なお嬢様', '内なる独白']
+for t in CN_TEMPLATES:
+    TEMPLATE_LANG[f'voice_design_templates_{t}'] = '中文'
+for t in EN_TEMPLATES:
+    TEMPLATE_LANG[f'voice_design_templates_{t}'] = '英文'
+for t in JP_TEMPLATES:
+    TEMPLATE_LANG[f'voice_design_templates_{t}'] = '日文'
+
+
+def get_template_data():
+    """获取 template 点击和保存数据（近7天）"""
+    query = """
+    WITH daily_dates AS (
+        SELECT DISTINCT _TABLE_SUFFIX as dt
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+    ),
+    combined AS (
+        SELECT user_pseudo_id, event_name, event_params,
+            (SELECT ep.value.int_value FROM UNNEST(event_params) ep WHERE ep.key = 'ga_session_id') as session_id
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name IN ('voice_design_template_click', 'voice_design_save_success', 'page_voice_design_exposure')
+        UNION ALL
+        SELECT user_pseudo_id, event_name, event_params,
+            (SELECT ep.value.int_value FROM UNNEST(event_params) ep WHERE ep.key = 'ga_session_id') as session_id
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+            AND event_name IN ('voice_design_template_click', 'voice_design_save_success', 'page_voice_design_exposure')
+            AND _TABLE_SUFFIX NOT IN (SELECT dt FROM daily_dates)
+    ),
+    -- template点击统计
+    template_clicks AS (
+        SELECT
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'templateId') as template_id,
+            COUNT(*) as clicks,
+            COUNT(DISTINCT user_pseudo_id) as click_users
+        FROM combined
+        WHERE event_name = 'voice_design_template_click'
+        GROUP BY template_id
+    ),
+    -- 总曝光
+    total_exposure AS (
+        SELECT COUNT(*) as exposure_count, COUNT(DISTINCT user_pseudo_id) as exposure_users
+        FROM combined
+        WHERE event_name = 'page_voice_design_exposure'
+    ),
+    -- 总保存
+    total_saves AS (
+        SELECT COUNT(*) as save_count, COUNT(DISTINCT user_pseudo_id) as save_users
+        FROM combined
+        WHERE event_name = 'voice_design_save_success'
+    ),
+    -- 使用template后保存的session（同用户同session中有template_click和save_success）
+    template_sessions AS (
+        SELECT DISTINCT c1.user_pseudo_id, c1.session_id,
+            (SELECT ep.value.string_value FROM UNNEST(c1.event_params) ep WHERE ep.key = 'templateId') as template_id
+        FROM combined c1
+        WHERE c1.event_name = 'voice_design_template_click'
+            AND EXISTS (
+                SELECT 1 FROM combined c2
+                WHERE c2.event_name = 'voice_design_save_success'
+                    AND c2.user_pseudo_id = c1.user_pseudo_id
+                    AND c2.session_id = c1.session_id
+            )
+    ),
+    template_saves AS (
+        SELECT template_id, COUNT(*) as saves
+        FROM template_sessions
+        GROUP BY template_id
+    )
+    SELECT
+        tc.template_id,
+        tc.clicks,
+        tc.click_users,
+        COALESCE(ts.saves, 0) as saves,
+        te.exposure_count,
+        te.exposure_users,
+        tsa.save_count as total_saves,
+        tsa.save_users as total_save_users
+    FROM template_clicks tc
+    CROSS JOIN total_exposure te
+    CROSS JOIN total_saves tsa
+    LEFT JOIN template_saves ts ON tc.template_id = ts.template_id
+    ORDER BY tc.clicks DESC
+    """
+
+    rows = run_query(query)
+    if not rows:
+        return {}
+
+    exposure_count = rows[0].get('exposure_count', 0) if rows else 0
+    total_saves = rows[0].get('total_saves', 0) if rows else 0
+
+    # 按语言分组
+    lang_data = {'中文': {'templates': [], 'total_clicks': 0, 'total_saves': 0},
+                 '英文': {'templates': [], 'total_clicks': 0, 'total_saves': 0},
+                 '日文': {'templates': [], 'total_clicks': 0, 'total_saves': 0}}
+
+    for row in rows:
+        tid = row.get('template_id', '')
+        lang = TEMPLATE_LANG.get(tid, '其他')
+        if lang not in lang_data:
+            continue
+
+        # 提取 template 显示名
+        name = tid.replace('voice_design_templates_', '') if tid else 'unknown'
+        clicks = row.get('clicks', 0)
+        saves = row.get('saves', 0)
+
+        lang_data[lang]['templates'].append({
+            'id': tid,
+            'name': name,
+            'clicks': clicks,
+            'click_users': row.get('click_users', 0),
+            'saves': saves,
+        })
+        lang_data[lang]['total_clicks'] += clicks
+        lang_data[lang]['total_saves'] += saves
+
+    # 计算比例
+    for lang in lang_data:
+        d = lang_data[lang]
+        d['click_rate'] = round(d['total_clicks'] / exposure_count * 100, 1) if exposure_count > 0 else 0
+        d['save_rate'] = round(d['total_saves'] / total_saves * 100, 1) if total_saves > 0 else 0
+        # 每个 template 的占比（占该语言总点击）
+        for t in d['templates']:
+            t['click_pct'] = round(t['clicks'] / d['total_clicks'] * 100, 1) if d['total_clicks'] > 0 else 0
+
+    return {
+        'exposure_count': exposure_count,
+        'total_saves': total_saves,
+        'languages': lang_data,
+    }
+
+
 def main():
     print("开始获取数据...")
 
@@ -1291,6 +1435,9 @@ def main():
     print("  获取未生成用户行为流...")
     non_gen_flow = get_non_gen_flow_data()
 
+    print("  获取 template 使用数据...")
+    template_data = get_template_data()
+
     data = {
         'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S') + ' (北京时间)',
         'user_tiers': user_tiers,
@@ -1305,6 +1452,7 @@ def main():
         'design_voice': design_voice,
         'tts_adoption': tts_adoption,
         'non_gen_flow': non_gen_flow,
+        'template_data': template_data,
     }
 
     # 保存为 JSON - 使用脚本所在目录
