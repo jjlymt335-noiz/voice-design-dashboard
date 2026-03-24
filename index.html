@@ -1435,7 +1435,11 @@
                     <div style="font-size:13px;font-weight:600;color:${color};margin-bottom:8px;padding-left:5px;cursor:pointer;user-select:none;" onclick="var el=document.getElementById('${detailId}');var arrow=this.querySelector('.arrow');if(el.style.display==='none'){el.style.display='block';arrow.textContent='▼';}else{el.style.display='none';arrow.textContent='▶';}">
                         <span class="arrow" style="font-size:11px;margin-right:4px;">▶</span>${lang} 各 Template
                     </div>
-                    <div id="${detailId}" style="display:none;">`;
+                    <div id="${detailId}" style="display:none;">
+                    <div style="font-size:10px;color:#a0aec0;margin-bottom:8px;line-height:1.5;">
+                        点击占比 = 该 template 点击数 / ${lang}总点击数(${d.total_clicks.toLocaleString()})<br>
+                        转化率 = 该 template 归因保存数 / 该 template 点击数
+                    </div>`;
                 for (const t of sorted) {
                     const clickBarW = d.total_clicks > 0 ? (t.clicks / sorted[0].clicks * 100) : 0;
                     html += `
