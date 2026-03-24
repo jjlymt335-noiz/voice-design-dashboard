@@ -1428,16 +1428,26 @@
                         <span class="arrow" style="font-size:11px;margin-right:4px;">▶</span>${lang} 各 Template
                     </div>
                     <div id="${detailId}" style="display:none;">`;
+                const maxSaves = sorted.length > 0 ? Math.max(...sorted.map(t => t.saves)) : 1;
                 for (const t of sorted) {
-                    const barWidth = d.total_clicks > 0 ? (t.clicks / sorted[0].clicks * 100) : 0;
+                    const clickBarW = d.total_clicks > 0 ? (t.clicks / sorted[0].clicks * 100) : 0;
+                    const saveBarW = maxSaves > 0 ? (t.saves / maxSaves * 100) : 0;
                     html += `
-                    <div style="margin-bottom:6px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:2px;">
-                            <span style="color:#4a5568;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%;" title="${t.name}">${t.name}</span>
-                            <span style="color:#718096;flex-shrink:0;">${t.clicks.toLocaleString()} <span style="color:${color};">(${t.click_pct}%)</span></span>
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:12px;color:#4a5568;font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${t.name}">${t.name}</div>
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+                            <span style="font-size:10px;color:#a0aec0;width:28px;flex-shrink:0;">点击</span>
+                            <div style="flex:1;background:#edf2f7;border-radius:3px;height:6px;overflow:hidden;">
+                                <div style="background:${color};height:100%;width:${clickBarW}%;border-radius:3px;"></div>
+                            </div>
+                            <span style="font-size:11px;color:#718096;min-width:70px;text-align:right;">${t.clicks.toLocaleString()} <span style="color:${color};">(${t.click_pct}%)</span></span>
                         </div>
-                        <div style="background:#edf2f7;border-radius:3px;height:6px;overflow:hidden;">
-                            <div style="background:${color};height:100%;width:${barWidth}%;border-radius:3px;transition:width 0.3s;"></div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span style="font-size:10px;color:#a0aec0;width:28px;flex-shrink:0;">保存</span>
+                            <div style="flex:1;background:#edf2f7;border-radius:3px;height:6px;overflow:hidden;">
+                                <div style="background:${color}80;height:100%;width:${saveBarW}%;border-radius:3px;"></div>
+                            </div>
+                            <span style="font-size:11px;color:#718096;min-width:70px;text-align:right;">${t.saves.toLocaleString()}</span>
                         </div>
                     </div>`;
                 }
