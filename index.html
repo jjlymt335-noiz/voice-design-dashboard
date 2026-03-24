@@ -1414,16 +1414,20 @@
             html += `</div>`;
             html += `<div style="text-align:center;color:#a0aec0;font-size:11px;margin-bottom:15px;">* 总曝光 ${td.exposure_count.toLocaleString()}，总保存 ${td.total_saves.toLocaleString()}</div>`;
 
-            // 第二层：每个语言的 template 详情
+            // 第二层：可展开的 template 详情
             html += `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;">`;
             for (const lang of langOrder) {
                 const d = td.languages[lang];
                 if (!d) continue;
                 const color = langColors[lang];
                 const sorted = [...d.templates].sort((a, b) => b.clicks - a.clicks);
+                const detailId = `templateDetail_${lang}`;
 
                 html += `<div>
-                    <div style="font-size:13px;font-weight:600;color:${color};margin-bottom:8px;padding-left:5px;">${lang} 各 Template</div>`;
+                    <div style="font-size:13px;font-weight:600;color:${color};margin-bottom:8px;padding-left:5px;cursor:pointer;user-select:none;" onclick="var el=document.getElementById('${detailId}');var arrow=this.querySelector('.arrow');if(el.style.display==='none'){el.style.display='block';arrow.textContent='▼';}else{el.style.display='none';arrow.textContent='▶';}">
+                        <span class="arrow" style="font-size:11px;margin-right:4px;">▶</span>${lang} 各 Template
+                    </div>
+                    <div id="${detailId}" style="display:none;">`;
                 for (const t of sorted) {
                     const barWidth = d.total_clicks > 0 ? (t.clicks / sorted[0].clicks * 100) : 0;
                     html += `
@@ -1437,7 +1441,7 @@
                         </div>
                     </div>`;
                 }
-                html += `</div>`;
+                html += `</div></div>`;
             }
             html += `</div>`;
 
