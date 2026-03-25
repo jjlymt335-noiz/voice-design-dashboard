@@ -639,10 +639,9 @@
                 <div class="detail-title">Template 使用情况 <span style="font-size: 11px; color: #718096; font-weight: normal;"> - 近7天</span></div>
                 <div id="templateSection"></div>
             </div>
-            <!-- 缓存命中率 - 合并在独立模块内，跨两列 -->
-            <div class="detail-card" style="grid-column: 1 / -1;">
-                <div class="detail-title">生成缓存命中率 <span style="font-size: 11px; color: #718096; font-weight: normal;"> - 近14天 · from_cache / generate_success</span></div>
-                <div id="cacheRatioSection"></div>
+            <!-- 缓存命中率 - 单行文字 -->
+            <div class="detail-card" style="grid-column: 1 / -1; padding: 12px 20px;">
+                <div id="cacheRatioSection" style="font-size: 13px; color: #4a5568;"></div>
             </div>
         </div>
 
@@ -1466,39 +1465,19 @@
             document.getElementById('templateSection').innerHTML = html;
         }
 
-        // 渲染缓存命中率
+        // 渲染缓存命中率（当天一句话）
         function renderCacheRatio() {
             const cr = dashboardData.cache_ratio;
             if (!cr || Object.keys(cr).length === 0) {
-                document.getElementById('cacheRatioSection').innerHTML = '<div style="color:#718096;text-align:center;">暂无数据</div>';
+                document.getElementById('cacheRatioSection').innerHTML = '<span style="color:#a0aec0;">暂无数据</span>';
                 return;
             }
-            const dates = Object.keys(cr).sort();
-            let html = '<div style="display:flex;gap:6px;align-items:flex-end;height:120px;padding:10px 0;">';
-            const maxTotal = Math.max(...dates.map(d => cr[d].total));
-            for (const d of dates) {
-                const item = cr[d];
-                const barH = maxTotal > 0 ? Math.max(item.total / maxTotal * 100, 4) : 4;
-                const cacheH = item.total > 0 ? (item.cache_hit / item.total * barH) : 0;
-                const nonCacheH = barH - cacheH;
-                const label = `${d.slice(4,6)}/${d.slice(6,8)}`;
-                const ratioColor = item.ratio >= 50 ? '#48bb78' : item.ratio >= 30 ? '#ecc94b' : '#f56565';
-                html += `
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
-                    <span style="font-size:10px;font-weight:600;color:${ratioColor};">${item.ratio}%</span>
-                    <div style="width:100%;max-width:40px;display:flex;flex-direction:column;">
-                        <div style="background:#e2e8f0;height:${nonCacheH}px;border-radius:3px 3px 0 0;"></div>
-                        <div style="background:#667eea;height:${cacheH}px;border-radius:0 0 3px 3px;"></div>
-                    </div>
-                    <span style="font-size:9px;color:#a0aec0;transform:rotate(-45deg);white-space:nowrap;">${label}</span>
-                </div>`;
-            }
-            html += '</div>';
-            html += `<div style="display:flex;gap:15px;justify-content:center;margin-top:8px;font-size:10px;color:#718096;">
-                <span><span style="display:inline-block;width:10px;height:10px;background:#667eea;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>缓存命中</span>
-                <span><span style="display:inline-block;width:10px;height:10px;background:#e2e8f0;border-radius:2px;vertical-align:middle;margin-right:3px;"></span>非缓存</span>
-            </div>`;
-            document.getElementById('cacheRatioSection').innerHTML = html;
+            const today = Object.keys(cr).sort().pop();
+            const item = cr[today];
+            const label = `${today.slice(4,6)}/${today.slice(6,8)}`;
+            const ratioColor = item.ratio >= 50 ? '#48bb78' : item.ratio >= 30 ? '#ecc94b' : '#f56565';
+            document.getElementById('cacheRatioSection').innerHTML =
+                `<b>生成缓存命中率</b>（${label}）：generate_success <b>${item.total}</b> 次，其中 from_cache <b>${item.cache_hit}</b> 次，命中率 <b style="color:${ratioColor};font-size:15px;">${item.ratio}%</b>`;
         }
 
         let trendViewMode = 'absolute'; // 'absolute' or 'percentage'
