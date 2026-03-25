@@ -1397,6 +1397,53 @@ def get_template_data():
     }
 
 
+def get_cache_ratio_data():
+    """获取近14天每天 generate_success 中 from_cache=true 的比例"""
+    query = """
+    WITH daily_dates AS (
+        SELECT DISTINCT _TABLE_SUFFIX as dt
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+    ),
+    combined AS (
+        SELECT event_date,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from_cache') as from_cache
+        FROM `noiz-430406.analytics_510746763.events_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            AND event_name = 'voice_design_generate_success'
+        UNION ALL
+        SELECT event_date,
+            (SELECT ep.value.string_value FROM UNNEST(event_params) ep WHERE ep.key = 'from_cache') as from_cache
+        FROM `noiz-430406.analytics_510746763.events_intraday_*`
+        WHERE _TABLE_SUFFIX >= FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
+            AND _TABLE_SUFFIX < FORMAT_DATE("%Y%m%d", DATE_ADD(CURRENT_DATE(), INTERVAL 1 DAY))
+            AND event_name = 'voice_design_generate_success'
+            AND _TABLE_SUFFIX NOT IN (SELECT dt FROM daily_dates)
+    )
+    SELECT
+        event_date,
+        COUNT(*) as total,
+        COUNTIF(from_cache = 'true') as cache_hit
+    FROM combined
+    GROUP BY event_date
+    ORDER BY event_date
+    """
+    rows = run_query(query)
+    result = {}
+    for row in rows:
+        date = row.get('event_date', '')
+        total = row.get('total', 0)
+        cache_hit = row.get('cache_hit', 0)
+        result[date] = {
+            'total': total,
+            'cache_hit': cache_hit,
+            'ratio': round(cache_hit / total * 100, 1) if total > 0 else 0,
+        }
+    return result
+
+
 def main():
     print("开始获取数据...")
 
@@ -1442,6 +1489,9 @@ def main():
     print("  获取 template 使用数据...")
     template_data = get_template_data()
 
+    print("  获取缓存命中率数据...")
+    cache_ratio = get_cache_ratio_data()
+
     data = {
         'update_time': beijing_now.strftime('%Y-%m-%d %H:%M:%S') + ' (北京时间)',
         'user_tiers': user_tiers,
@@ -1457,6 +1507,7 @@ def main():
         'tts_adoption': tts_adoption,
         'non_gen_flow': non_gen_flow,
         'template_data': template_data,
+        'cache_ratio': cache_ratio,
     }
 
     # 保存为 JSON - 使用脚本所在目录
